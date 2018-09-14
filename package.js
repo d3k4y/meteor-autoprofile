@@ -1,12 +1,11 @@
 Package.describe({
-    summary: "Generate profile pages / data-sheets based on given simpl-schema, currently outputs html with bootstrap3 classes",
+    summary: "Generate profile pages / data-sheets based on simpl-schema",
     version: "0.0.1",
     name: "d3k4y:meteor-autoprofile",
     git: "https://github.com/d3k4y/meteor-autoprofile"
 });
 
-Npm.depends({
-});
+Npm.depends({});
 
 Package.onUse(function (api) {
     api.versionsFrom('1.6');
