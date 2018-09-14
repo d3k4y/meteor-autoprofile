@@ -57,7 +57,7 @@ function getFieldValue (templateInstance, name, id, context, options, namespace)
     const fullName = namespace ? `${namespace}.${id || name}` : id || name;
     const fieldSchema = SimpleSchemaFunctions.getFieldSchema(Meteor.users, fullName) || SimpleSchemaFunctions.getFieldSchema(Meteor.users, id);
     if (fieldContext) {
-        const value = fieldContext[fullName];
+        const value = fieldContext[fullName] || fieldContext[name];
         if (fieldSchema) {
             const subFieldName = _.last(fullName.split('.'));
             const afFieldInput = fieldSchema.autoform ? fieldSchema.autoform.afFieldInput : null;
