@@ -1,0 +1,227 @@
+
+<!-- Outer -->
+<template name="autoProfile">
+  {{#with options}}
+    <div class="autoprofile-container target profile">
+      {{#each rows}}
+        {{>autoProfileRow}}
+      {{/each}}
+    </div>
+  {{else}}
+    NO options found!
+  {{/with}}
+</template>
+
+<template name="autoProfileRow">
+  <div class="row">
+    {{#each cols}}
+      {{>autoProfileCol}}
+    {{/each}}
+  </div>
+</template>
+
+<template name="autoProfileCol">
+  <div class="{{class}}">
+    {{#each panels}}
+      {{#if cols}}
+        {{>autoProfileRow}}
+      {{else}}
+        {{>autoProfilePanel}}
+      {{/if}}
+    {{/each}}
+  </div>
+</template>
+
+
+<!-- Profile Panel -->
+<template name="autoProfilePanel">
+  {{#if contentOnly}}
+    {{#if field}}
+      {{#with field}}
+        {{> DynamicTemplate template=getTemplate data=this}}
+      {{/with}}
+    {{else}}
+      <ul class="list-group">
+        {{#each fields}}
+          {{> DynamicTemplate template=getTemplate data=this}}
+        {{/each}}
+      </ul>
+    {{/if}}
+  {{else}}
+    <div class="panel panel-default {{#if listContent}}list-panel{{/if}} {{#if highlighted}}highlighted{{/if}}">
+      <div class="panel-heading">
+        {{#if titleField}}
+          {{> DynamicTemplate template=getTemplate data=titleField}}
+        {{else}}
+          {{panelTitle}}
+          {{#if icon}}
+            <i class="fa fa-{{icon}} fa-1x"></i>
+          {{/if}}
+        {{/if}}
+      </div>
+      <div class="panel-body">
+        {{#if field}}
+          {{#with field}}
+            {{> DynamicTemplate template=getTemplate data=this}}
+          {{/with}}
+        {{else}}
+          <ul class="list-group">
+            {{#each fields}}
+              {{> DynamicTemplate template=getTemplate data=this}}
+            {{/each}}
+          </ul>
+        {{/if}}
+      </div>
+    </div>
+  {{/if}}
+</template>
+
+
+<!-- Value Rendering -->
+<template name="autoProfileFieldHelper_editable">
+  {{#if editingEnabled}}
+    {{> editableText
+          context=context collection="freelancers" field=field
+          wysiwyg=wysiwyg acceptEmpty=acceptEmpty substitute=substitute class=class inputClass=inputClass
+    }}
+  {{else}}
+    {{#if fieldValue}}
+      {{#if isMarkdown}}
+        {{#markdown}}{{fieldValue}}{{/markdown}}
+      {{else}}
+        {{#if isHTML}}
+          {{{fieldValue}}}
+        {{else}}
+          {{#if urlFieldValue}}
+            <a href="{{urlFieldValue}}" target="_blank">{{fieldValue}}</a>
+          {{else}}
+            {{#if isUrl}}
+              <a href="{{fieldValue}}" target="_blank">{{fieldValue}}</a>
+            {{else}}
+              {{fieldValue}}
+            {{/if}}
+          {{/if}}
+        {{/if}}
+      {{/if}}
+    {{else}}
+      ?
+    {{/if}}
+  {{/if}}
+</template>
+
+
+
+<!-- References -->
+<template name="autoProfileField_string_reference">
+  {{#if contentOnly}}
+    <a href="{{referenceUrl}}">{{referenceLabel}}</a>
+  {{else}}
+    <li class="list-group-item text-right">
+      <span class="pull-left"><strong>{{fieldTitle}}</strong></span>
+      {{#if referenceLabel}}
+        <a href="{{referenceUrl}}">{{referenceLabel}}</a>
+      {{else}}
+        ?
+      {{/if}}
+    </li>
+  {{/if}}
+</template>
+
+
+<!-- Field Types -->
+<template name="autoProfileField_string">
+{{#if group}}
+  {{#each group}}
+    {{>autoProfileFieldHelper_editable urlFieldValue=urlFieldValue isUrl=isUrl isHTML=isHTML isMarkdown=isMarkdown editingEnabled=editingEnabled context=context field=name fieldValue=fieldValue substitute='<i class="fa fa-pencil"></i>'}}
+  {{/each}}
+{{else}}
+  {{#if contentOnly}}
+    {{>autoProfileFieldHelper_editable urlFieldValue=urlFieldValue isUrl=isUrl isHTML=isHTML isMarkdown=isMarkdown editingEnabled=editingEnabled context=context field=name fieldValue=fieldValue substitute='<i class="fa fa-pencil"></i>'}}
+  {{else}}
+    <li class="list-group-item text-right">
+      <span class="pull-left"><strong>{{fieldTitle}}</strong></span>
+      {{>autoProfileFieldHelper_editable urlFieldValue=urlFieldValue isUrl=isUrl isHTML=isHTML isMarkdown=isMarkdown editingEnabled=editingEnabled context=context field=name fieldValue=fieldValue substitute='<i class="fa fa-pencil"></i>'}}
+    </li>
+  {{/if}}
+{{/if}}
+</template>
+
+<template name="autoProfileField_string_textarea">
+  {{>autoProfileFieldHelper_editable urlFieldValue=urlFieldValue isUrl=isUrl isHTML=isHTML isMarkdown=isMarkdown editingEnabled=editingEnabled context=context field=name fieldValue=fieldValue wysiwyg=true acceptEmpty=true substitute='<i class="fa fa-pencil"></i>' class="post-body" inputClass="post-body-wysiwyg"}}
+</template>
+
+<template name="autoProfileField_image">
+  ::autoProfileField_image::
+  {{#if fieldValue}}
+    <img src="/cdn/storage/{{fieldValue._collectionName}}/{{fieldValue._id}}/original/{{fieldValue._id}}.{{fieldValue.extension}}" width="320" />
+  {{else}}
+    {{#if placeholder}}
+      <img src="{{placeholder}}" width="320" /> <!--nobody.jpg-->
+    {{/if}}
+  {{/if}}
+</template>
+
+<template name="autoProfileField_file">
+  ::autoProfileField_file::
+  <li class="list-group-item text-right">
+    <span class="pull-left"><strong>{{fieldTitle}}</strong></span>
+    {{#if fieldValue}}
+      <a href="/cdn/storage/{{fieldValue._collectionName}}/{{fieldValue._id}}/original/{{fieldValue._id}}.{{fieldValue.extension}}" target="_blank">{{fieldValue.name}}</a>
+    {{else}}
+      ?
+    {{/if}}
+  </li>
+</template>
+
+<template name="autoProfileField_date">
+  <li class="list-group-item text-right">
+    <span class="pull-left"><strong>{{fieldTitle}}</strong></span>
+    {{fieldValue}}
+  </li>
+</template>
+
+<template name="autoProfileField_array">
+  <ul class="list-group">
+    {{#each fieldValue}}
+      <li class="list-group-item text-muted">
+        {{this}}
+      </li>
+    {{/each}}
+  </ul>
+</template>
+
+<template name="autoProfileField_array_object">
+  {{#if renderInplace}}
+    <ul class="list-group">
+      {{#each fieldValue}}
+        <li class="list-group-item text-right">
+          <span class="pull-left"><strong>{{titleFieldValue}}</strong></span>
+          {{#if isFileField}}
+            {{>autoProfileField_file}}
+          {{else}}
+            {{{contentFieldValue}}}
+          {{/if}}
+        </li>
+      {{/each}}
+    </ul>
+  {{else}}
+    <!--SUBLIST: TODO-->
+    <ul class="list-group">
+      {{#each fieldValue}}
+        <li class="list-group-item text-right">
+          <span class="pull-left"><strong>{{titleFieldValue}}</strong></span>
+          {{#if isFileField}}
+            {{>autoProfileField_file}}
+          {{else}}
+            {{{contentFieldValue}}}
+          {{/if}}
+        </li>
+      {{/each}}
+    </ul>
+  {{/if}}
+</template>
+
+
+<template name="autoProfileField_object">
+  {{fieldValueAsJSON}}
+</template>
