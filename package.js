@@ -11,7 +11,7 @@ Package.onUse(function (api) {
     api.versionsFrom('1.6');
 
     api.use([
-        'templating',
+        'templating@1.3.2',
         'check',
         'ecmascript',
         'jquery',
