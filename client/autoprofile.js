@@ -31,6 +31,10 @@ function getContext (templateInstance) {
     }
 }
 
+function getFieldContext (templateInstance, context) {
+    return getNamespaceContext(context || getContext(templateInstance), namespace);
+}
+
 function unifyNamespace (namespace) {
     let ns = [];
     if (namespace) {
@@ -52,14 +56,17 @@ function getNamespaceContext (context, namespace) {
     }
     return context;
 }
-function getFieldValue (templateInstance, name, id, context, options, namespace) {
-    const fieldContext = getNamespaceContext(context || getContext(templateInstance), namespace);
-    const fullName = namespace ? `${namespace}.${id || name}` : id || name;
-    const fieldSchema = SimpleSchemaFunctions.getFieldSchema(Meteor.users, fullName) || SimpleSchemaFunctions.getFieldSchema(Meteor.users, id);
+
+function getFieldValue (templateInstance, id, context, options) {
+    if (!id || !id.split) { console.error('getFieldValue idtestfailed!!!', id); return; }
+    const idSplit = id.split('.');
+    const namespace = idSplit.length > 1 ? _.first(idSplit) : null;
+    const name = _.last(idSplit);
+    const fieldContext = getNamespaceContext(getContext(templateInstance), namespace);
+    const fieldSchema = SimpleSchemaFunctions.getFieldSchema(Meteor.users, id) || SimpleSchemaFunctions.getFieldSchema(Meteor.users, id);
     if (fieldContext) {
-        const value = fieldContext[fullName] || fieldContext[name];
+        const value = fieldContext[name] || context[name];
         if (fieldSchema) {
-            const subFieldName = _.last(fullName.split('.'));
             const afFieldInput = fieldSchema.autoform ? fieldSchema.autoform.afFieldInput : null;
             if (fieldSchema.type.singleType === Date) {
                 if (options && options.dateformat) {
@@ -76,14 +83,14 @@ function getFieldValue (templateInstance, name, id, context, options, namespace)
                     return false;
                 }
             } else {
-                return fieldContext[subFieldName];
+                return fieldContext[name] || context[name];
             }
         } else {
-            console.error('getFieldValue: fieldSchema not found', name, fullName);
+            console.error('getFieldValue: fieldSchema not found', name, id);
         }
         return value;
     }
-    console.error('getFieldValue: not found', fullName, fieldContext);
+    console.error('getFieldValue: not found', id, fieldContext);
 }
 
 
@@ -104,7 +111,6 @@ function getTemplate (templateInstance, context) {
                     return "autoProfileField_string_reference";
                 }
                 if (autoform) {
-                    console.error('autoform found', fullName, autoform);
                     if (autoform.rows > 0 || autoform.type === "markdown") {
                         return "autoProfileField_string_textarea";
                     }
@@ -148,9 +154,7 @@ Template.autoProfilePanel.helpers({
             return this.title;
         }
         if (this.field) {
-            const fullName = this.field.namespace ? `${this.field.namespace}.${this.field.name}` : this.field.name;
-            const fieldSchema = SimpleSchemaFunctions.getFieldSchema(Meteor.users, fullName);
-            return fieldSchema ? fieldSchema.label : null;
+            return _.get(SimpleSchemaFunctions.getFieldSchema(Meteor.users, this.field.id), 'label');
         }
     },
     getTemplate() {
@@ -168,35 +172,30 @@ Template.autoProfileField_string.helpers({
         return getContext(Template.instance());
     },
     isUrl() {
-        const name = this.name ? this.name : this;
-        const fullName = this.namespace ? `${this.namespace}.${name}` : name;
-        const fieldSchema = SimpleSchemaFunctions.getFieldSchema(Meteor.users, fullName);
+        const fieldSchema = SimpleSchemaFunctions.getFieldSchema(Meteor.users, this.id || this);
         if (fieldSchema && fieldSchema.autoprofile) {
             return fieldSchema.autoprofile.isUrl;
         }
     },
     editingEnabled() {
         const rootTemplate = Template.instance().parent((view) => {
-            console.error('root template', view);
             return view.view.name === "Template.autoProfile";
         });
         const options = getOptions(Template.instance());
         if (options) {
-            console.error('editingEnabled', options, Template.instance(), rootTemplate);
             return options.editingEnabled;
         }
     },
     fieldTitle() {
-        const fullName = this.namespace ? `${this.namespace}.${this.name}` : this.name;
-        const fieldSchema = SimpleSchemaFunctions.getFieldSchema(Meteor.users, fullName);
+        const fieldSchema = SimpleSchemaFunctions.getFieldSchema(Meteor.users, this.id);
         return fieldSchema ? fieldSchema.label : null;
     },
     fieldValue() {
-        return getFieldValue(Template.instance(), this.name ? this.name : this, this.id, null, this, this.namespace);
+        return getFieldValue(Template.instance(), this.id || this, this);
     },
     urlFieldValue() {
         if (this.urlField) {
-            return getFieldValue(Template.instance(), this.urlField.name ? this.urlField.name : this.urlField, this.urlField.id, null, this, this.namespace);
+            return getFieldValue(Template.instance(), this.urlField.id || this.urlField, this);
         }
         return false;
     },
@@ -215,19 +214,16 @@ Template.autoProfileField_string_reference.inheritsHelpersFrom('autoProfileField
 /* Extend Field: String ID Reference to different Collection */
 Template.autoProfileField_string_reference.helpers({
     referenceUrl() {
-        const myname = this.name ? this.name : this;
-        const ref = this.reference;
-        const refId = getFieldValue(Template.instance(), myname, this.id, null, this, this.namespace);
-        return ref.urlPrefix + refId;
+        const refId = getFieldValue(Template.instance(), this.id || this, this);
+        return this.reference.urlPrefix + refId;
     },
     referenceLabel() {
-        const myname = this.name ? this.name : this;
         const ref = this.reference;
-        const refId = getFieldValue(Template.instance(), myname, this.id, null, this, this.namespace);
+        const refId = getFieldValue(Template.instance(), this.id || this, this);
         if (refId && ref && ref.collection) {
             const relObj = ref.collection.findOne(refId);
             if (relObj) {
-                return relObj[ref.labelField && ref.labelField.name ? ref.labelField.name : ref.labelField];
+                return relObj[ref.labelField && (ref.labelField.id || ref.labelField)];
             }
         }
 
@@ -243,8 +239,7 @@ Template.autoProfileField_array_object.helpers({
         const parent = Template.instance().parent();
         if (parent && parent.data && parent.data.data && parent.data.data.titleField) {
             const titleField = parent.data.data.titleField;
-            const selfOrProp = titleField.name ? titleField.name : titleField;
-            return getFieldValue(parent, selfOrProp, titleField.id, this, null, this.namespace);
+            return getFieldValue(parent, titleField.id || titleField, this);
         }
         return "Error: titleField not set in array of objects context";
     },
@@ -257,7 +252,7 @@ Template.autoProfileField_array_object.helpers({
             for (let i = 0; i < subfields.length; i++) {
                 const subfield = subfields[i];
                 const templateName = getTemplate(templateInstance, subfield);
-                const fieldValue = getFieldValue(parent, subfield.name || subfield, subfield.id, this, null, this.namespace);
+                const fieldValue = getFieldValue(parent, subfield.id, this);
                 if (templateName === "autoProfileField_file") {
                     const href = `/cdn/storage/${fieldValue._collectionName}/${fieldValue._id}/original/${fieldValue._id}.${fieldValue.extension}`;
                     return `<a href="${href}" target="_blank">${fieldValue.name}</a>`;
@@ -277,6 +272,6 @@ Template.autoProfileField_array_object.helpers({
 
 Template.autoProfileField_object.helpers({
     fieldValueAsJSON() {
-        return JSON.stringify(getFieldValue(Template.instance(), this.name ? this.name : this, this.id, null, this, this.namespace));
+        return JSON.stringify(getFieldValue(Template.instance(), this.id, this));
     }
 });
