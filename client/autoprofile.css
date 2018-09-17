@@ -63,8 +63,12 @@
   border-right: 0px;
 }
 
-.autoprofile-container .list-group {
+.autoprofile-container .card {
   margin-bottom: 30px;
+}
+
+.autoprofile-container .list-group {
+  /* margin-bottom: 30px; */
 }
 
 /* TODO: FIXME: remove */
@@ -89,4 +93,15 @@
 }
 .autoprofile-container .row .row > DIV:last-of-type {
   padding-right: 0px;
+}
+
+
+.autoprofile-container .card .card-header {
+  margin-bottom: 0;
+  padding: 10px;
+  font-size: 18px;
+  background-color: #83a6b5;
+  border-top-right-radius: 2px;
+  border-top-left-radius: 2px;
+  color: #FFFFFF;
 }

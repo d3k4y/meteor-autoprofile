@@ -136,6 +136,12 @@ function getTemplate (templateInstance, context) {
 
 /* AutoProfile Panel */
 Template.autoProfilePanel.helpers({
+    cardOrPanel() {
+        return 'card' || 'panel';
+    },
+    headerOrHeading() {
+        return 'header' || 'heading';
+    },
     panelTitle() {
         const schema = SimpleSchemaFunctions.getSchema(Meteor.users);
         if (this.title) {
@@ -170,8 +176,13 @@ Template.autoProfileField_string.helpers({
         }
     },
     editingEnabled() {
+        const rootTemplate = Template.instance().parent((view) => {
+            console.error('root template', view);
+            return view.view.name === "Template.autoProfile";
+        });
         const options = getOptions(Template.instance());
         if (options) {
+            console.error('editingEnabled', options, Template.instance(), rootTemplate);
             return options.editingEnabled;
         }
     },

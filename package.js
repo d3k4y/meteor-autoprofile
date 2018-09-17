@@ -19,6 +19,7 @@ Package.onUse(function (api) {
         'reactive-var',
         'aldeed:template-extension@4.1.0',
         'corefi:meteor-simple-schema-functions@0.0.1',
+        'babrahams:editable-text@0.9.10'
     ]);
 
     api.mainModule('client.js', 'client');

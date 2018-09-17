@@ -36,20 +36,18 @@
 <!-- Profile Panel -->
 <template name="autoProfilePanel">
   {{#if contentOnly}}
-    {{#if field}}
-      {{#with field}}
-        {{> DynamicTemplate template=getTemplate data=this}}
-      {{/with}}
+    {{#with field}}
+      {{> DynamicTemplate template=getTemplate data=this}}
     {{else}}
       <ul class="list-group">
         {{#each fields}}
           {{> DynamicTemplate template=getTemplate data=this}}
         {{/each}}
       </ul>
-    {{/if}}
+    {{/with}}
   {{else}}
-    <div class="panel panel-default {{#if listContent}}list-panel{{/if}} {{#if highlighted}}highlighted{{/if}}">
-      <div class="panel-heading">
+    <div class="{{cardOrPanel}} {{cardOrPanel}}-default {{#if listContent}}list-{{cardOrPanel}}{{/if}} {{#if highlighted}}highlighted{{/if}}">
+      <div class="{{cardOrPanel}}-{{headerOrHeading}}  cf-card__card-header">
         {{#if titleField}}
           {{> DynamicTemplate template=getTemplate data=titleField}}
         {{else}}
@@ -59,19 +57,15 @@
           {{/if}}
         {{/if}}
       </div>
-      <div class="panel-body">
-        {{#if field}}
-          {{#with field}}
+      {{#with field}}
+          {{> DynamicTemplate template=getTemplate data=this}}
+      {{else}}
+        <ul class="list-group">
+          {{#each fields}}
             {{> DynamicTemplate template=getTemplate data=this}}
-          {{/with}}
-        {{else}}
-          <ul class="list-group">
-            {{#each fields}}
-              {{> DynamicTemplate template=getTemplate data=this}}
-            {{/each}}
-          </ul>
-        {{/if}}
-      </div>
+          {{/each}}
+        </ul>
+      {{/with}}
     </div>
   {{/if}}
 </template>
