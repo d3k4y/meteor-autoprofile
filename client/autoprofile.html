@@ -6,6 +6,20 @@
       {{#each rows}}
         {{>autoProfileRow}}
       {{/each}}
+      {{#afModal  formId="editUserProfileForm"
+                  fields=getFields
+                  collection="Meteor.users"
+                  operation="update"
+                  meteormethod="accountsAdminUi.updateUserProfile"
+                  buttonContent="Speichern"
+                  buttonClasses="btn cf-button-modals p-2"
+                  doc=getContext._id
+                  prompt=""
+                  title="Profil bearbeiten"
+                  backdrop="true"
+                  placeholder="test"
+                  class="btn btn-primary cf-button-primary js-user-edit-field-afmodalbutton"
+      }}<span class="icon-user"></span> Profil bearbeiten{{/afModal}}
     </div>
   {{else}}
     NO options found!
@@ -79,27 +93,29 @@
           wysiwyg=wysiwyg acceptEmpty=acceptEmpty substitute=substitute class=class inputClass=inputClass
     }}
   {{else}}
-    {{#if fieldValue}}
-      {{#if isMarkdown}}
-        {{#markdown}}{{fieldValue}}{{/markdown}}
-      {{else}}
-        {{#if isHTML}}
-          {{{fieldValue}}}
+    <span id="autoprofile-field-{{field}}" class="autoprofile-field">
+      {{#if fieldValue}}
+        {{#if isMarkdown}}
+          {{#markdown}}{{fieldValue}}{{/markdown}}
         {{else}}
-          {{#if urlFieldValue}}
-            <a href="{{urlFieldValue}}" target="_blank">{{fieldValue}}</a>
+          {{#if isHTML}}
+            {{{fieldValue}}}
           {{else}}
-            {{#if isUrl}}
-              <a href="{{fieldValue}}" target="_blank">{{fieldValue}}</a>
+            {{#if urlFieldValue}}
+              <a href="{{urlFieldValue}}" target="_blank">{{fieldValue}}</a>
             {{else}}
-              {{fieldValue}}
+              {{#if isUrl}}
+                <a href="{{fieldValue}}" target="_blank">{{fieldValue}}</a>
+              {{else}}
+                {{fieldValue}}
+              {{/if}}
             {{/if}}
           {{/if}}
         {{/if}}
+      {{else}}
+        ?
       {{/if}}
-    {{else}}
-      ?
-    {{/if}}
+    </span>
   {{/if}}
 </template>
 
@@ -126,30 +142,30 @@
 <template name="autoProfileField_string">
 {{#if group}}
   {{#each group}}
-    {{>autoProfileFieldHelper_editable urlFieldValue=urlFieldValue isUrl=isUrl isHTML=isHTML isMarkdown=isMarkdown editingEnabled=editingEnabled context=context field=name fieldValue=fieldValue substitute='<i class="fa fa-pencil"></i>'}}
+    {{>autoProfileFieldHelper_editable urlFieldValue=urlFieldValue isUrl=isUrl isHTML=isHTML isMarkdown=isMarkdown editingEnabled=editingEnabled context=context field=id fieldValue=fieldValue substitute='<i class="fa fa-pencil"></i>'}}
   {{/each}}
 {{else}}
   {{#if contentOnly}}
-    {{>autoProfileFieldHelper_editable urlFieldValue=urlFieldValue isUrl=isUrl isHTML=isHTML isMarkdown=isMarkdown editingEnabled=editingEnabled context=context field=name fieldValue=fieldValue substitute='<i class="fa fa-pencil"></i>'}}
+    {{>autoProfileFieldHelper_editable urlFieldValue=urlFieldValue isUrl=isUrl isHTML=isHTML isMarkdown=isMarkdown editingEnabled=editingEnabled context=context field=id fieldValue=fieldValue substitute='<i class="fa fa-pencil"></i>'}}
   {{else}}
     <li class="list-group-item text-right">
       <span class="pull-left"><strong>{{fieldTitle}}</strong></span>
-      {{>autoProfileFieldHelper_editable urlFieldValue=urlFieldValue isUrl=isUrl isHTML=isHTML isMarkdown=isMarkdown editingEnabled=editingEnabled context=context field=name fieldValue=fieldValue substitute='<i class="fa fa-pencil"></i>'}}
+      {{>autoProfileFieldHelper_editable urlFieldValue=urlFieldValue isUrl=isUrl isHTML=isHTML isMarkdown=isMarkdown editingEnabled=editingEnabled context=context field=id fieldValue=fieldValue substitute='<i class="fa fa-pencil"></i>'}}
     </li>
   {{/if}}
 {{/if}}
 </template>
 
 <template name="autoProfileField_string_textarea">
-  {{>autoProfileFieldHelper_editable urlFieldValue=urlFieldValue isUrl=isUrl isHTML=isHTML isMarkdown=isMarkdown editingEnabled=editingEnabled context=context field=name fieldValue=fieldValue wysiwyg=true acceptEmpty=true substitute='<i class="fa fa-pencil"></i>' class="post-body" inputClass="post-body-wysiwyg"}}
+  {{>autoProfileFieldHelper_editable urlFieldValue=urlFieldValue isUrl=isUrl isHTML=isHTML isMarkdown=isMarkdown editingEnabled=editingEnabled context=context field=id fieldValue=fieldValue wysiwyg=true acceptEmpty=true substitute='<i class="fa fa-pencil"></i>' class="post-body" inputClass="post-body-wysiwyg"}}
 </template>
 
 <template name="autoProfileField_image">
   {{#if fieldValue}}
-    <img src="/cdn/storage/{{fieldValue._collectionName}}/{{fieldValue._id}}/original/{{fieldValue._id}}.{{fieldValue.extension}}" width="320" />
+    <img id="autoprofile-field-{{field}}" class="autoprofile-field" src="/cdn/storage/{{fieldValue._collectionName}}/{{fieldValue._id}}/original/{{fieldValue._id}}.{{fieldValue.extension}}" width="320" />
   {{else}}
     {{#if placeholder}}
-      <img src="{{placeholder}}" width="320" /> <!--nobody.jpg-->
+      <img id="autoprofile-field-{{field}}" class="autoprofile-field" src="{{placeholder}}" width="320" /> <!--nobody.jpg-->
     {{/if}}
   {{/if}}
 </template>

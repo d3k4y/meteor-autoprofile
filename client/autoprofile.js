@@ -1,12 +1,14 @@
-/* eslint-disable consistent-return,no-redeclare,default-case,no-case-declarations,meteor/template-names */
+/* eslint-disable consistent-return,no-redeclare,default-case,no-case-declarations,meteor/template-names,meteor/prefix-eventmap-selectors */
 import {Meteor} from 'meteor/meteor';
 import {Template} from 'meteor/templating';
 import {SimpleSchema, SimpleSchemaGroup} from 'simpl-schema';
+import {ReactiveVar} from 'meteor/reactive-var';
 import {_} from "meteor/erasaur:meteor-lodash";
 import moment from 'moment';
 
 import {SimpleSchemaFunctions} from "meteor/corefi:meteor-simple-schema-functions";
 
+import './_includes/autoformHook';
 import './autoprofile.html';
 import './autoprofile.css';
 
@@ -29,10 +31,6 @@ function getContext (templateInstance) {
     if (data) {
         return data.myContext;
     }
-}
-
-function getFieldContext (templateInstance, context) {
-    return getNamespaceContext(context || getContext(templateInstance), namespace);
 }
 
 function unifyNamespace (namespace) {
@@ -58,7 +56,6 @@ function getNamespaceContext (context, namespace) {
 }
 
 function getFieldValue (templateInstance, id, context, options) {
-    if (!id || !id.split) { console.error('getFieldValue idtestfailed!!!', id); return; }
     const idSplit = id.split('.');
     const namespace = idSplit.length > 1 ? _.first(idSplit) : null;
     const name = _.last(idSplit);
@@ -82,8 +79,6 @@ function getFieldValue (templateInstance, id, context, options) {
                     }
                     return false;
                 }
-            } else {
-                return fieldContext[name] || context[name];
             }
         } else {
             console.error('getFieldValue: fieldSchema not found', name, id);
@@ -139,6 +134,19 @@ function getTemplate (templateInstance, context) {
     return "autoProfileField_string";
 }
 
+
+Template.autoProfile.onCreated(function onRendered() {
+    this.currentFieldId = new ReactiveVar('');
+});
+
+Template.autoProfile.helpers({
+    getFields() {
+        return Template.instance().currentFieldId.get();
+    },
+    getContext() {
+        return Template.instance().data.myContext;
+    }
+});
 
 /* AutoProfile Panel */
 Template.autoProfilePanel.helpers({
@@ -199,6 +207,14 @@ Template.autoProfileField_string.helpers({
         }
         return false;
     },
+});
+
+Template.autoProfileField_string.events({
+    'click .autoprofile-field'(event, templateInstance, doc) {
+        const autoProfileTemplate = templateInstance.parent((instance) => { return instance.view.name === 'Template.autoProfile'; });
+        autoProfileTemplate.currentFieldId.set(event.currentTarget.id.substr(18));
+        Meteor.defer(() => { $('.autoprofile-container .js-user-edit-field-afmodalbutton')[0].click(); });
+    }
 });
 
 // inherit default helpers
