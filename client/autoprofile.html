@@ -18,27 +18,12 @@
                   title="Profil bearbeiten"
                   backdrop="true"
                   placeholder="test"
-                  class="btn btn-primary cf-button-primary js-user-edit-field-afmodalbutton"
+                  class="btn btn-primary cf-button-primary js-user-edit-field-afmodalbutton d-none"
       }}<span class="icon-user"></span> Profil bearbeiten{{/afModal}}
     </div>
   {{else}}
     NO options found!
   {{/with}}
-
-  {{#afModal  formId="editUserProfileForm"
-              fields="profile.emailAdresses.1"
-              collection="Meteor.users"
-              operation="update"
-              meteormethod="accountsAdminUi.updateUserProfile"
-              buttonContent="Speichern"
-              buttonClasses="btn cf-button-modals p-2"
-              doc=getContext._id
-              prompt=""
-              title="Profil bearbeiten"
-              backdrop="true"
-              placeholder="test"
-              class="btn btn-primary cf-button-primary js-user-edit-afmodalbutton d-none"
-  }}<span class="icon-user"></span> Profil XX bearbeiten{{/afModal}}
 </template>
 
 <template name="autoProfileRow">

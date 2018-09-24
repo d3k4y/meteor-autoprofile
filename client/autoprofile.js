@@ -13,6 +13,10 @@ import './autoprofile.html';
 import './autoprofile.css';
 
 
+function dbg(...params) {
+    // console.error.apply(this, params);
+}
+
 /* AutoProfile public methods */
 function getData (templateInstance) {
     const autoProfileTemplate = templateInstance.parent((instance) => { return instance.view.name === 'Template.autoProfile'; });
@@ -84,11 +88,11 @@ function getFieldValue (templateInstance, id, context, options) {
                     }
                 }
             } else {
-                console.error('getFieldValue: fieldSchema not found', name, id);
+                dbg('getFieldValue: fieldSchema not found', name, id);
             }
             return value;
         }
-        console.error('getFieldValue: not found', id, fieldContext);
+        dbg('getFieldValue: not found', id, fieldContext);
     }
     return null;
 }
@@ -135,7 +139,7 @@ function getTemplate (templateInstance, context) {
                 return "autoProfileField_array";
         }
     } else {
-        console.error('getTemplate: fieldSchema not found!', fullName, context.id);
+        dbg('getTemplate: fieldSchema not found!', fullName, context.id);
     }
     return "autoProfileField_string";
 }
