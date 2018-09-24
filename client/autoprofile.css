@@ -105,3 +105,7 @@
   border-top-left-radius: 2px;
   color: #FFFFFF;
 }
+
+.autoprofile-container .autoprofile-field.editable {
+  cursor: pointer;
+}

@@ -1,4 +1,4 @@
-/* eslint-disable consistent-return,no-redeclare,default-case,no-case-declarations,meteor/template-names,meteor/prefix-eventmap-selectors */
+/* eslint-disable consistent-return,default-case,no-case-declarations,meteor/template-names,meteor/prefix-eventmap-selectors */
 import {Meteor} from 'meteor/meteor';
 import {Template} from 'meteor/templating';
 import {SimpleSchema, SimpleSchemaGroup} from 'simpl-schema';
@@ -56,36 +56,41 @@ function getNamespaceContext (context, namespace) {
 }
 
 function getFieldValue (templateInstance, id, context, options) {
-    const idSplit = id.split('.');
-    const namespace = idSplit.length > 1 ? _.first(idSplit) : null;
-    const name = _.last(idSplit);
-    const fieldContext = getNamespaceContext(getContext(templateInstance), namespace);
-    const fieldSchema = SimpleSchemaFunctions.getFieldSchema(Meteor.users, id) || SimpleSchemaFunctions.getFieldSchema(Meteor.users, id);
-    if (fieldContext) {
-        const value = fieldContext[name] || context[name];
-        if (fieldSchema) {
-            const afFieldInput = fieldSchema.autoform ? fieldSchema.autoform.afFieldInput : null;
-            if (fieldSchema.type.singleType === Date) {
-                if (options && options.dateformat) {
-                    return moment(value).format(options.dateformat);
-                }
-                return moment(value).format("DD.MM.YYYY [um] HH:mm");
-            } else if (fieldSchema.type.singleType === String && afFieldInput && afFieldInput.type === "fileUpload") {
-                const collection = window[afFieldInput.collection];
-                if (collection) {
-                    const file = collection.find({_id: value}).fetch();
-                    if (file && file.length > 0) {
-                        return file[0];
+    if (_.isString(id)) {
+        const idSplit = id.split('.');
+        const namespace = idSplit.length > 1 ? _.first(idSplit) : null;
+        const name = _.last(idSplit);
+        const fieldContext = getNamespaceContext(getContext(templateInstance), namespace);
+        const profileOptions = getOptions(templateInstance);
+        const autoProfileTemplate = templateInstance.parent((instance) => { return instance.view.name === 'Template.autoProfile'; });
+        const fieldSchema = SimpleSchemaFunctions.getFieldSchema(profileOptions.collection, id) || SimpleSchemaFunctions.getFieldSchema(profileOptions.collection, id);
+        if (fieldContext) {
+            const value = fieldContext[name] || context[name];
+            if (fieldSchema) {
+                const afFieldInput = fieldSchema.autoform ? fieldSchema.autoform.afFieldInput : null;
+                if (fieldSchema.type.singleType === Date) {
+                    if (options && options.dateformat) {
+                        return moment(value).format(options.dateformat);
                     }
-                    return false;
+                    return moment(value).format("DD.MM.YYYY [um] HH:mm");
+                } else if (fieldSchema.type.singleType === String && afFieldInput && afFieldInput.type === "fileUpload") {
+                    const collection = window[afFieldInput.collection];
+                    if (collection) {
+                        const file = collection.find({_id: value}).fetch();
+                        if (file && file.length > 0) {
+                            return file[0];
+                        }
+                        return false;
+                    }
                 }
+            } else {
+                console.error('getFieldValue: fieldSchema not found', name, id);
             }
-        } else {
-            console.error('getFieldValue: fieldSchema not found', name, id);
+            return value;
         }
-        return value;
+        console.error('getFieldValue: not found', id, fieldContext);
     }
-    console.error('getFieldValue: not found', id, fieldContext);
+    return null;
 }
 
 
@@ -93,8 +98,9 @@ function getFieldValue (templateInstance, id, context, options) {
 //   - decimal
 //   - integer
 function getTemplate (templateInstance, context) {
+    const profileOptions = getOptions(templateInstance);
     const fullName = context.namespace ? `${context.namespace}.${context.id || context.name}` : context.id || context.name;
-    const fieldSchema = SimpleSchemaFunctions.getFieldSchema(Meteor.users, fullName) || SimpleSchemaFunctions.getFieldSchema(Meteor.users, context.id);
+    const fieldSchema = SimpleSchemaFunctions.getFieldSchema(profileOptions.collection, fullName) || SimpleSchemaFunctions.getFieldSchema(profileOptions.collection, context.id);
     if (fieldSchema) {
         switch (fieldSchema.type.singleType) {
             case Object: return "autoProfileField_object";
@@ -119,7 +125,7 @@ function getTemplate (templateInstance, context) {
                 }
                 return "autoProfileField_string";
             case Array:
-                const subSchema = SimpleSchemaFunctions.getFieldSchema(Meteor.users, `${fullName}.$`);
+                const subSchema = SimpleSchemaFunctions.getFieldSchema(profileOptions.collection, `${fullName}.$`);
                 if (subSchema) {
                     switch (subSchema.type.singleType) {
                         case Object: return "autoProfileField_array_object";
@@ -136,7 +142,8 @@ function getTemplate (templateInstance, context) {
 
 
 Template.autoProfile.onCreated(function onRendered() {
-    this.currentFieldId = new ReactiveVar('');
+    window.autoprofileState_FieldId = this.currentFieldId = new ReactiveVar('');
+    window.autoprofileState_ArrayIndex = this.currentArrayIndex = new ReactiveVar('');
 });
 
 Template.autoProfile.helpers({
@@ -157,12 +164,13 @@ Template.autoProfilePanel.helpers({
         return 'header' || 'heading';
     },
     panelTitle() {
-        const schema = SimpleSchemaFunctions.getSchema(Meteor.users);
+        const profileOptions = getOptions(Template.instance());
+        const schema = SimpleSchemaFunctions.getSchema(profileOptions.collection);
         if (this.title) {
             return this.title;
         }
         if (this.field) {
-            return _.get(SimpleSchemaFunctions.getFieldSchema(Meteor.users, this.field.id), 'label');
+            return _.get(SimpleSchemaFunctions.getFieldSchema(profileOptions.collection, this.field.id), 'label');
         }
     },
     getTemplate() {
@@ -179,24 +187,31 @@ Template.autoProfileField_string.helpers({
     context() {
         return getContext(Template.instance());
     },
+    isEditable() {
+        let fieldOptions = Template.instance().data.fieldOptions;
+        if (!fieldOptions) { fieldOptions = Template.instance().data;}
+        return fieldOptions && (typeof fieldOptions.editable === 'undefined' || fieldOptions.editable);
+    },
     isUrl() {
-        const fieldSchema = SimpleSchemaFunctions.getFieldSchema(Meteor.users, this.id || this);
+        const profileOptions = getOptions(Template.instance());
+        const fieldSchema = SimpleSchemaFunctions.getFieldSchema(profileOptions.collection, this.id || this);
         if (fieldSchema && fieldSchema.autoprofile) {
             return fieldSchema.autoprofile.isUrl;
         }
     },
     editingEnabled() {
-        const rootTemplate = Template.instance().parent((view) => {
-            return view.view.name === "Template.autoProfile";
-        });
         const options = getOptions(Template.instance());
         if (options) {
             return options.editingEnabled;
         }
     },
     fieldTitle() {
-        const fieldSchema = SimpleSchemaFunctions.getFieldSchema(Meteor.users, this.id);
+        const profileOptions = getOptions(Template.instance());
+        const fieldSchema = SimpleSchemaFunctions.getFieldSchema(profileOptions.collection, this.id);
         return fieldSchema ? fieldSchema.label : null;
+    },
+    fieldId() {
+        return this.id || this;
     },
     fieldValue() {
         return getFieldValue(Template.instance(), this.id || this, this);
@@ -212,10 +227,25 @@ Template.autoProfileField_string.helpers({
 Template.autoProfileField_string.events({
     'click .autoprofile-field'(event, templateInstance, doc) {
         const autoProfileTemplate = templateInstance.parent((instance) => { return instance.view.name === 'Template.autoProfile'; });
-        autoProfileTemplate.currentFieldId.set(event.currentTarget.id.substr(18));
-        Meteor.defer(() => { $('.autoprofile-container .js-user-edit-field-afmodalbutton')[0].click(); });
+        const $elem = $(event.currentTarget);
+        // TODO: check for autoProfileTemplate.data.options.editingEnabled ?
+        if (typeof templateInstance.data.editable === 'undefined' || templateInstance.data.editable) {
+            const arrayIndex = $elem.attr('data-array-index');
+            autoProfileTemplate.currentArrayIndex.set(arrayIndex);
+            autoProfileTemplate.currentFieldId.set(arrayIndex ? `${$elem.closest('[data-field-id]').attr('data-field-id')}.${arrayIndex}` : $elem.attr('data-field-id'));
+            Meteor.defer(() => { $('.autoprofile-container .js-user-edit-field-afmodalbutton')[0].click(); });
+        }
     }
 });
+
+
+Template.autoProfileFieldHelper_editable.helpers({
+    isEditable() {
+        const fieldOptions = Template.instance().data.fieldOptions;
+        return fieldOptions && (typeof fieldOptions.editable === 'undefined' || fieldOptions.editable);
+    }
+});
+
 
 // inherit default helpers
 Template.autoProfileField_image.inheritsHelpersFrom('autoProfileField_string');
@@ -226,6 +256,18 @@ Template.autoProfileField_array.inheritsHelpersFrom('autoProfileField_string');
 Template.autoProfileField_object.inheritsHelpersFrom('autoProfileField_string');
 Template.autoProfileField_array_object.inheritsHelpersFrom('autoProfileField_string');
 Template.autoProfileField_string_reference.inheritsHelpersFrom('autoProfileField_string');
+
+// Template.autoProfileFieldHelper_editable.inheritsHelpersFrom('autoProfileField_string');
+
+// inherit default eventmap
+Template.autoProfileField_image.inheritsEventsFrom('autoProfileField_string');
+Template.autoProfileField_file.inheritsEventsFrom('autoProfileField_string');
+Template.autoProfileField_date.inheritsEventsFrom('autoProfileField_string');
+Template.autoProfileField_string_textarea.inheritsEventsFrom('autoProfileField_string');
+Template.autoProfileField_array.inheritsEventsFrom('autoProfileField_string');
+Template.autoProfileField_object.inheritsEventsFrom('autoProfileField_string');
+Template.autoProfileField_array_object.inheritsEventsFrom('autoProfileField_string');
+
 
 /* Extend Field: String ID Reference to different Collection */
 Template.autoProfileField_string_reference.helpers({
@@ -255,7 +297,7 @@ Template.autoProfileField_array_object.helpers({
         const parent = Template.instance().parent();
         if (parent && parent.data && parent.data.data && parent.data.data.titleField) {
             const titleField = parent.data.data.titleField;
-            return getFieldValue(parent, titleField.id || titleField, this);
+            return `<span data-field-id="${titleField.id || titleField}">${getFieldValue(parent, titleField.id || titleField, this)}</span>`;
         }
         return "Error: titleField not set in array of objects context";
     },
@@ -274,9 +316,9 @@ Template.autoProfileField_array_object.helpers({
                     return `<a href="${href}" target="_blank">${fieldValue.name}</a>`;
                 }
                 if (i === 0) {
-                    value = fieldValue;
+                    value = `<span data-field-id="${subfield.id}">${fieldValue}</span>`;
                 } else {
-                    value += ` ${fieldValue}`;
+                    value += ` <span data-field-id="${subfield.id}">${fieldValue}</span>`;
                 }
             }
             return value;

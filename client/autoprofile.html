@@ -6,7 +6,7 @@
       {{#each rows}}
         {{>autoProfileRow}}
       {{/each}}
-      {{#afModal  formId="editUserProfileForm"
+      {{#afModal  formId="editUserAutoProfileForm"
                   fields=getFields
                   collection="Meteor.users"
                   operation="update"
@@ -24,6 +24,21 @@
   {{else}}
     NO options found!
   {{/with}}
+
+  {{#afModal  formId="editUserProfileForm"
+              fields="profile.emailAdresses.1"
+              collection="Meteor.users"
+              operation="update"
+              meteormethod="accountsAdminUi.updateUserProfile"
+              buttonContent="Speichern"
+              buttonClasses="btn cf-button-modals p-2"
+              doc=getContext._id
+              prompt=""
+              title="Profil bearbeiten"
+              backdrop="true"
+              placeholder="test"
+              class="btn btn-primary cf-button-primary js-user-edit-afmodalbutton d-none"
+  }}<span class="icon-user"></span> Profil XX bearbeiten{{/afModal}}
 </template>
 
 <template name="autoProfileRow">
@@ -93,7 +108,7 @@
           wysiwyg=wysiwyg acceptEmpty=acceptEmpty substitute=substitute class=class inputClass=inputClass
     }}
   {{else}}
-    <span id="autoprofile-field-{{field}}" class="autoprofile-field">
+    <span id="autoprofile-field-{{field}}" data-field-id="{{field}}" class="autoprofile-field {{#if isEditable}}editable{{/if}}">
       {{#if fieldValue}}
         {{#if isMarkdown}}
           {{#markdown}}{{fieldValue}}{{/markdown}}
@@ -142,30 +157,30 @@
 <template name="autoProfileField_string">
 {{#if group}}
   {{#each group}}
-    {{>autoProfileFieldHelper_editable urlFieldValue=urlFieldValue isUrl=isUrl isHTML=isHTML isMarkdown=isMarkdown editingEnabled=editingEnabled context=context field=id fieldValue=fieldValue substitute='<i class="fa fa-pencil"></i>'}}
+    {{>autoProfileFieldHelper_editable urlFieldValue=urlFieldValue fieldOptions=this isUrl=isUrl isHTML=isHTML isMarkdown=isMarkdown editingEnabled=editingEnabled context=context field=id fieldValue=fieldValue substitute='<i class="fa fa-pencil"></i>'}}
   {{/each}}
 {{else}}
   {{#if contentOnly}}
-    {{>autoProfileFieldHelper_editable urlFieldValue=urlFieldValue isUrl=isUrl isHTML=isHTML isMarkdown=isMarkdown editingEnabled=editingEnabled context=context field=id fieldValue=fieldValue substitute='<i class="fa fa-pencil"></i>'}}
+    {{>autoProfileFieldHelper_editable urlFieldValue=urlFieldValue fieldOptions=this isUrl=isUrl isHTML=isHTML isMarkdown=isMarkdown editingEnabled=editingEnabled context=context field=id fieldValue=fieldValue substitute='<i class="fa fa-pencil"></i>'}}
   {{else}}
     <li class="list-group-item text-right">
       <span class="pull-left"><strong>{{fieldTitle}}</strong></span>
-      {{>autoProfileFieldHelper_editable urlFieldValue=urlFieldValue isUrl=isUrl isHTML=isHTML isMarkdown=isMarkdown editingEnabled=editingEnabled context=context field=id fieldValue=fieldValue substitute='<i class="fa fa-pencil"></i>'}}
+      {{>autoProfileFieldHelper_editable urlFieldValue=urlFieldValue fieldOptions=this isUrl=isUrl isHTML=isHTML isMarkdown=isMarkdown editingEnabled=editingEnabled context=context field=id fieldValue=fieldValue substitute='<i class="fa fa-pencil"></i>'}}
     </li>
   {{/if}}
 {{/if}}
 </template>
 
 <template name="autoProfileField_string_textarea">
-  {{>autoProfileFieldHelper_editable urlFieldValue=urlFieldValue isUrl=isUrl isHTML=isHTML isMarkdown=isMarkdown editingEnabled=editingEnabled context=context field=id fieldValue=fieldValue wysiwyg=true acceptEmpty=true substitute='<i class="fa fa-pencil"></i>' class="post-body" inputClass="post-body-wysiwyg"}}
+  {{>autoProfileFieldHelper_editable urlFieldValue=urlFieldValue fieldOptions=this isUrl=isUrl isHTML=isHTML isMarkdown=isMarkdown editingEnabled=editingEnabled context=context field=id fieldValue=fieldValue wysiwyg=true acceptEmpty=true substitute='<i class="fa fa-pencil"></i>' class="post-body" inputClass="post-body-wysiwyg"}}
 </template>
 
 <template name="autoProfileField_image">
   {{#if fieldValue}}
-    <img id="autoprofile-field-{{field}}" class="autoprofile-field" src="/cdn/storage/{{fieldValue._collectionName}}/{{fieldValue._id}}/original/{{fieldValue._id}}.{{fieldValue.extension}}" width="320" />
+    <img id="autoprofile-field-{{fieldId}}" data-field-id="{{fieldId}}" class="autoprofile-field {{#if isEditable}}editable{{/if}}" src="/cdn/storage/{{fieldValue._collectionName}}/{{fieldValue._id}}/original/{{fieldValue._id}}.{{fieldValue.extension}}" width="320" />
   {{else}}
     {{#if placeholder}}
-      <img id="autoprofile-field-{{field}}" class="autoprofile-field" src="{{placeholder}}" width="320" /> <!--nobody.jpg-->
+      <img id="autoprofile-field-{{fieldId}}" data-field-id="{{fieldId}}" class="autoprofile-field {{#if isEditable}}editable{{/if}}" src="{{placeholder}}" width="320" /> <!--nobody.jpg-->
     {{/if}}
   {{/if}}
 </template>
@@ -189,9 +204,9 @@
 </template>
 
 <template name="autoProfileField_array">
-  <ul class="list-group">
+  <ul class="list-group" data-field-id="{{fieldId}}" data-field-type="autoProfileField_array">
     {{#each fieldValue}}
-      <li class="list-group-item text-muted">
+      <li class="list-group-item text-muted" data-array-index="{{@index}}">
         {{this}}
       </li>
     {{/each}}
@@ -200,10 +215,10 @@
 
 <template name="autoProfileField_array_object">
   {{#if renderInplace}}
-    <ul class="list-group">
+    <ul class="list-group" data-field-id="{{fieldId}}" data-field-type="autoProfileField_array_object">
       {{#each fieldValue}}
-        <li class="list-group-item text-right">
-          <span class="pull-left"><strong>{{titleFieldValue}}</strong></span>
+        <li class="list-group-item text-right autoprofile-field {{#if isEditable}}editable{{/if}}" data-array-index="{{@index}}" data-parent-field-id="{{..fieldId}}">
+          <span class="pull-left"><strong>{{{titleFieldValue}}}</strong></span>
           {{#if isFileField}}
             {{>autoProfileField_file}}
           {{else}}
@@ -214,10 +229,10 @@
     </ul>
   {{else}}
     <!--SUBLIST: TODO-->
-    <ul class="list-group">
+    <ul class="list-group" data-field-id="{{fieldId}}" data-field-type="autoProfileField_array_object">
       {{#each fieldValue}}
-        <li class="list-group-item text-right">
-          <span class="pull-left"><strong>{{titleFieldValue}}</strong></span>
+        <li class="list-group-item text-right autoprofile-field {{#if isEditable}}editable{{/if}}" data-array-index="{{@index}}">
+          <strong class="pull-left">{{{titleFieldValue}}}</strong>
           {{#if isFileField}}
             {{>autoProfileField_file}}
           {{else}}
