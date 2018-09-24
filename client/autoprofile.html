@@ -228,7 +228,9 @@
           {{/if}}
         </li>
       {{/each}}
-      <button type="button" class="btn btn-primary btn-sm js-autoprofile-add-array-item" data-autoform-field="{{this.atts.name}}"><span class="icon icon-plus"></span></button>
+      {{#if isEditable}}
+        <button type="button" class="btn btn-primary btn-sm js-autoprofile-add-array-item" data-autoform-field="{{this.atts.name}}"><span class="icon icon-plus"></span></button>
+      {{/if}}
     </ul>
   {{else}}
     <!--SUBLIST: TODO-->
@@ -246,7 +248,9 @@
           {{/if}}
         </li>
       {{/each}}
-      <button type="button" class="btn btn-primary btn-sm js-autoprofile-add-array-item" data-autoform-field="{{this.atts.name}}"><span class="icon icon-plus"></span></button>
+      {{#if isEditable}}
+        <button type="button" class="btn btn-primary btn-sm js-autoprofile-add-array-item" data-autoform-field="{{this.atts.name}}"><span class="icon icon-plus"></span></button>
+      {{/if}}
     </ul>
   {{/if}}
 </template>
