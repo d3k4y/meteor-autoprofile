@@ -109,3 +109,13 @@
 .autoprofile-container .autoprofile-field.editable {
   cursor: pointer;
 }
+
+
+.autoprofile-container .card .autoprofile-field.editable .btn.js-autoprofile-remove-array-item,
+.autoprofile-container .card .btn.js-autoprofile-add-array-item {
+    display: none;
+}
+.autoprofile-container .card .autoprofile-field.editable:hover .btn.js-autoprofile-remove-array-item,
+.autoprofile-container .card:hover .btn.js-autoprofile-add-array-item {
+    display: inline-block;
+}

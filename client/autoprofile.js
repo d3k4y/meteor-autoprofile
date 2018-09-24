@@ -5,6 +5,7 @@ import {SimpleSchema, SimpleSchemaGroup} from 'simpl-schema';
 import {ReactiveVar} from 'meteor/reactive-var';
 import {_} from "meteor/erasaur:meteor-lodash";
 import moment from 'moment';
+import toastr from "toastr";
 
 import {SimpleSchemaFunctions} from "meteor/corefi:meteor-simple-schema-functions";
 
@@ -156,6 +157,9 @@ Template.autoProfile.helpers({
     },
     getContext() {
         return Template.instance().data.myContext;
+    },
+    getOptions() {
+        return Template.instance().data.options;
     }
 });
 
@@ -237,8 +241,48 @@ Template.autoProfileField_string.events({
             const arrayIndex = $elem.attr('data-array-index');
             autoProfileTemplate.currentArrayIndex.set(arrayIndex);
             autoProfileTemplate.currentFieldId.set(arrayIndex ? `${$elem.closest('[data-field-id]').attr('data-field-id')}.${arrayIndex}` : $elem.attr('data-field-id'));
-            Meteor.defer(() => { $('.autoprofile-container .js-user-edit-field-afmodalbutton')[0].click(); });
+            Meteor.defer(() => { $('.autoprofile-container .js-edit-field-afmodalbutton')[0].click(); });
         }
+    },
+
+    'click .js-autoprofile-add-array-item'(event, templateInstance, doc) {
+        const autoProfileTemplate = templateInstance.parent((instance) => { return instance.view.name === 'Template.autoProfile'; });
+        const $elem = $(event.currentTarget);
+        if (typeof templateInstance.data.editable === 'undefined' || templateInstance.data.editable) {
+            autoProfileTemplate.currentFieldId.set(`${$elem.closest('[data-field-id]').attr('data-field-id')}.999999`);
+            autoProfileTemplate.currentArrayIndex.set(null);
+            Meteor.defer(() => { $('.autoprofile-container .js-add-array-item-afmodalbutton')[0].click(); });
+        }
+        event.preventDefault();
+        event.stopPropagation();
+        return false;
+    },
+
+    'click .js-autoprofile-remove-array-item'(event, templateInstance, doc) {
+        const autoProfileTemplate = templateInstance.parent((instance) => { return instance.view.name === 'Template.autoProfile'; });
+        const profileOptions = getOptions(templateInstance);
+        const $elem = $(event.currentTarget);
+        if (typeof templateInstance.data.editable === 'undefined' || templateInstance.data.editable) {
+            const $base = $elem.closest('[data-array-index]');
+            const arrayIndex = $base.attr('data-array-index');
+            const fieldIdSplit = `${$base.closest('[data-field-id]').attr('data-field-id')}`.split('.');
+            const dbDoc = profileOptions.collection.findOne(getContext(templateInstance)._id);
+            let currentDbDoc = dbDoc;
+            for (let i = 0; i < fieldIdSplit.length; i++) {
+                currentDbDoc = currentDbDoc[fieldIdSplit[i]];
+            }
+            currentDbDoc.splice(arrayIndex, 1);
+            Meteor.call(profileOptions.method, dbDoc, (error) => {
+                if (error) {
+                    toastr.error(`Beim Speichern des Benutzerprofils ist ein Fehler aufgetreten: ${error}`);
+                } else {
+                    toastr.success('Das Benutzerprofil wurde erfolgreich aktualisiert');
+                }
+            });
+        }
+        event.preventDefault();
+        event.stopPropagation();
+        return false;
     }
 });
 

@@ -8,18 +8,32 @@
       {{/each}}
       {{#afModal  formId="editUserAutoProfileForm"
                   fields=getFields
-                  collection="Meteor.users"
+                  collection=getOptions.collectionName
+                  meteormethod=getOptions.method
                   operation="update"
-                  meteormethod="accountsAdminUi.updateUserProfile"
                   buttonContent="Speichern"
                   buttonClasses="btn cf-button-modals p-2"
                   doc=getContext._id
-                  prompt=""
+                  template = "bootstrap4"
                   title="Profil bearbeiten"
                   backdrop="true"
-                  placeholder="test"
-                  class="btn btn-primary cf-button-primary js-user-edit-field-afmodalbutton d-none"
+                  class="btn btn-primary cf-button-primary js-edit-field-afmodalbutton d-none"
       }}<span class="icon-user"></span> Profil bearbeiten{{/afModal}}
+
+      {{#afModal  formId="addUserAutoProfileArrayItemForm"
+                  fields=getFields
+                  collection=getOptions.collectionName
+                  meteormethod=getOptions.method
+                  operation="update"
+                  buttonContent="Speichern"
+                  buttonClasses="btn cf-button-modals p-2"
+                  doc=getContext._id
+                  template = "bootstrap4"
+                  title="Eintrag Hinzufügen"
+                  backdrop="true"
+                  placeholder="test"
+                  class="btn btn-primary cf-button-primary js-add-array-item-afmodalbutton d-none"
+      }}<span class="icon-user"></span> Hinzufügen{{/afModal}}
     </div>
   {{else}}
     NO options found!
@@ -209,8 +223,12 @@
           {{else}}
             {{{contentFieldValue}}}
           {{/if}}
+          {{#if isEditable}}
+            <button type="button" class="btn btn-primary btn-sm js-autoprofile-remove-array-item"><span class="icon icon-minus"></span></button>
+          {{/if}}
         </li>
       {{/each}}
+      <button type="button" class="btn btn-primary btn-sm js-autoprofile-add-array-item" data-autoform-field="{{this.atts.name}}"><span class="icon icon-plus"></span></button>
     </ul>
   {{else}}
     <!--SUBLIST: TODO-->
@@ -223,8 +241,12 @@
           {{else}}
             {{{contentFieldValue}}}
           {{/if}}
+          {{#if isEditable}}
+            <button type="button" class="btn btn-primary btn-sm js-autoprofile-remove-array-item"><span class="icon icon-minus"></span></button>
+          {{/if}}
         </li>
       {{/each}}
+      <button type="button" class="btn btn-primary btn-sm js-autoprofile-add-array-item" data-autoform-field="{{this.atts.name}}"><span class="icon icon-plus"></span></button>
     </ul>
   {{/if}}
 </template>
