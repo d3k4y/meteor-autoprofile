@@ -24,6 +24,8 @@ Package.onUse(function (api) {
     api.use([
         'aldeed:autoform@6.3.0',
         'd3k4y:autoform-modals@0.4.3',
+        'd3k4y:files',
+        'd3k4y:autoform-files'
     ], 'client', {weak: true});
 
     api.use([
