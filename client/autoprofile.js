@@ -1,7 +1,6 @@
 /* eslint-disable consistent-return,default-case,no-case-declarations,meteor/template-names,meteor/prefix-eventmap-selectors */
 import {Meteor} from 'meteor/meteor';
 import {Template} from 'meteor/templating';
-import {SimpleSchema, SimpleSchemaGroup} from 'simpl-schema';
 import {ReactiveVar} from 'meteor/reactive-var';
 import {_} from "meteor/erasaur:meteor-lodash";
 import moment from 'moment';
@@ -67,7 +66,6 @@ function getFieldValue (templateInstance, id, context, options) {
         const name = _.last(idSplit);
         const fieldContext = getNamespaceContext(getContext(templateInstance), namespace);
         const profileOptions = getOptions(templateInstance);
-        const autoProfileTemplate = templateInstance.parent((instance) => { return instance.view.name === 'Template.autoProfile'; });
         const fieldSchema = SimpleSchemaFunctions.getFieldSchema(profileOptions.collection, id) || SimpleSchemaFunctions.getFieldSchema(profileOptions.collection, id);
         if (fieldContext) {
             const value = fieldContext[name] || context[name];
@@ -173,7 +171,6 @@ Template.autoProfilePanel.helpers({
     },
     panelTitle() {
         const profileOptions = getOptions(Template.instance());
-        const schema = SimpleSchemaFunctions.getSchema(profileOptions.collection);
         if (this.title) {
             return this.title;
         }
@@ -197,7 +194,7 @@ Template.autoProfileField_string.helpers({
     },
     isEditable() {
         let fieldOptions = Template.instance().data.fieldOptions;
-        if (!fieldOptions) { fieldOptions = Template.instance().data;}
+        if (!fieldOptions) { fieldOptions = Template.instance().data; }
         return fieldOptions && (typeof fieldOptions.editable === 'undefined' || fieldOptions.editable);
     },
     isUrl() {
@@ -259,7 +256,6 @@ Template.autoProfileField_string.events({
     },
 
     'click .js-autoprofile-remove-array-item'(event, templateInstance, doc) {
-        const autoProfileTemplate = templateInstance.parent((instance) => { return instance.view.name === 'Template.autoProfile'; });
         const profileOptions = getOptions(templateInstance);
         const $elem = $(event.currentTarget);
         if (typeof templateInstance.data.editable === 'undefined' || templateInstance.data.editable) {

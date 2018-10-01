@@ -12,7 +12,6 @@ AutoForm.addHooks(['editUserAutoProfileForm'], {
     before: {
         method: function (doc) {
             const dbDoc = this.collection.findOne(this.currentDoc._id);
-            const arrayIndex = window.autoprofileState_ArrayIndex.get();
             const fieldId = window.autoprofileState_FieldId.get();
             const fieldIdSplit = fieldId.split('.');
             let currentDoc = doc;
