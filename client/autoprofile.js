@@ -5,6 +5,7 @@ import {ReactiveVar} from 'meteor/reactive-var';
 import {_} from "meteor/erasaur:meteor-lodash";
 import moment from 'moment';
 import toastr from "toastr";
+import wNumb from "wnumb";
 
 import {SimpleSchemaFunctions} from "meteor/corefi:meteor-simple-schema-functions";
 
@@ -75,7 +76,8 @@ function getFieldValue (templateInstance, id, context, options) {
                     if (options && options.dateformat) {
                         return moment(value).format(options.dateformat);
                     }
-                    return moment(value).format("DD.MM.YYYY [um] HH:mm");
+                    // moment(value).format("DD.MM.YYYY [um] HH:mm")
+                    return value;
                 } else if (fieldSchema.type.singleType === String && afFieldInput && afFieldInput.type === "fileUpload") {
                     const collection = window[afFieldInput.collection];
                     if (collection) {
@@ -197,6 +199,10 @@ Template.autoProfileField_string.helpers({
         if (!fieldOptions) { fieldOptions = Template.instance().data; }
         return fieldOptions && (typeof fieldOptions.editable === 'undefined' || fieldOptions.editable);
     },
+    getView() {
+        const panelTemplate = Template.instance().parent((instance) => { return instance.view.name === 'Template.autoProfilePanel'; });
+        return panelTemplate && panelTemplate.data ? panelTemplate.data.view : null;
+    },
     isUrl() {
         const profileOptions = getOptions(Template.instance());
         const fieldSchema = SimpleSchemaFunctions.getFieldSchema(profileOptions.collection, this.id || this);
@@ -219,7 +225,12 @@ Template.autoProfileField_string.helpers({
         return this.id || this;
     },
     fieldValue() {
-        return getFieldValue(Template.instance(), this.id || this, this);
+        const instance = Template.instance();
+        const fieldValue = getFieldValue(instance, this.id || this, this);
+        if (typeof this.format === 'function') {
+            return this.format.call(instance, fieldValue);
+        }
+        return fieldValue;
     },
     urlFieldValue() {
         if (this.urlField) {

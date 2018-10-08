@@ -3,17 +3,31 @@
 <template name="autoProfile">
   {{#with options}}
     <div class="autoprofile-container target profile">
-      {{#each rows}}
-        {{>autoProfileRow}}
-      {{/each}}
+      {{#if containers}}
+        <div class="row cf-dfs-outer-row">
+          {{#each containers}}
+            <div class="{{class}}">
+              {{#each rows}}
+                {{>autoProfileRow}}
+              {{/each}}
+            </div>
+          {{/each}}
+        </div>
+      {{else}}
+        {{#each rows}}
+          {{>autoProfileRow}}
+        {{/each}}
+      {{/if}}
       {{#afModal  formId="editUserAutoProfileForm"
                   fields=getFields
                   collection=getOptions.collectionName
                   meteormethod=getOptions.method
+                  doc=getContext._id
+                  meteorupdatemethod="enhancedmethod"
                   operation="update"
                   buttonContent="Speichern"
                   buttonClasses="btn cf-button-modals p-2"
-                  doc=getContext._id
+                  placeholder=true
                   template = "bootstrap4"
                   title="Profil bearbeiten"
                   backdrop="true"
@@ -24,14 +38,15 @@
                   fields=getFields
                   collection=getOptions.collectionName
                   meteormethod=getOptions.method
+                  doc=getContext._id
+                  meteorupdatemethod="enhancedmethod"
                   operation="update"
                   buttonContent="Speichern"
                   buttonClasses="btn cf-button-modals p-2"
-                  doc=getContext._id
+                  placeholder=true
                   template = "bootstrap4"
                   title="Eintrag Hinzufügen"
                   backdrop="true"
-                  placeholder="test"
                   class="btn btn-primary cf-button-primary js-add-array-item-afmodalbutton d-none"
       }}<span class="icon-user"></span> Hinzufügen{{/afModal}}
     </div>
@@ -74,7 +89,9 @@
       </ul>
     {{/with}}
   {{else}}
+
     <div class="{{cardOrPanel}} {{cardOrPanel}}-default {{#if listContent}}list-{{cardOrPanel}}{{/if}} {{#if highlighted}}highlighted{{/if}}">
+
       <div class="{{cardOrPanel}}-{{headerOrHeading}}  cf-card__card-header">
         {{#if titleField}}
           {{> DynamicTemplate template=getTemplate data=titleField}}
@@ -85,15 +102,25 @@
           {{/if}}
         {{/if}}
       </div>
+
       {{#with field}}
           {{> DynamicTemplate template=getTemplate data=this}}
       {{else}}
-        <ul class="list-group">
-          {{#each fields}}
-            {{> DynamicTemplate template=getTemplate data=this}}
-          {{/each}}
-        </ul>
+        {{#if $eq view "table"}}
+          <table class="table">
+            {{#each fields}}
+              {{> DynamicTemplate template=getTemplate data=this}}
+            {{/each}}
+          </table>
+        {{else}}
+          <ul class="list-group">
+            {{#each fields}}
+              {{> DynamicTemplate template=getTemplate data=this}}
+            {{/each}}
+          </ul>
+        {{/if}}
       {{/with}}
+
     </div>
   {{/if}}
 </template>
@@ -138,7 +165,11 @@
 <!-- References -->
 <template name="autoProfileField_string_reference">
   {{#if contentOnly}}
-    <a href="{{referenceUrl}}">{{referenceLabel}}</a>
+    {{#if referenceLabel}}
+      <a href="{{referenceUrl}}">{{referenceLabel}}</a>
+    {{else}}
+      ?
+    {{/if}}
   {{else}}
     <li class="list-group-item text-right">
       <span class="pull-left"><strong>{{fieldTitle}}</strong></span>
@@ -154,20 +185,27 @@
 
 <!-- Field Types -->
 <template name="autoProfileField_string">
-{{#if group}}
-  {{#each group}}
-    {{>autoProfileFieldHelper_editable urlFieldValue=urlFieldValue fieldOptions=this isUrl=isUrl isHTML=isHTML isMarkdown=isMarkdown editingEnabled=editingEnabled context=context field=id fieldValue=fieldValue substitute='<i class="fa fa-pencil"></i>'}}
-  {{/each}}
-{{else}}
-  {{#if contentOnly}}
-    {{>autoProfileFieldHelper_editable urlFieldValue=urlFieldValue fieldOptions=this isUrl=isUrl isHTML=isHTML isMarkdown=isMarkdown editingEnabled=editingEnabled context=context field=id fieldValue=fieldValue substitute='<i class="fa fa-pencil"></i>'}}
-  {{else}}
-    <li class="list-group-item text-right">
-      <span class="pull-left"><strong>{{fieldTitle}}</strong></span>
+  {{#if group}}
+    {{#each group}}
       {{>autoProfileFieldHelper_editable urlFieldValue=urlFieldValue fieldOptions=this isUrl=isUrl isHTML=isHTML isMarkdown=isMarkdown editingEnabled=editingEnabled context=context field=id fieldValue=fieldValue substitute='<i class="fa fa-pencil"></i>'}}
-    </li>
+    {{/each}}
+  {{else}}
+    {{#if contentOnly}}
+      {{>autoProfileFieldHelper_editable urlFieldValue=urlFieldValue fieldOptions=this isUrl=isUrl isHTML=isHTML isMarkdown=isMarkdown editingEnabled=editingEnabled context=context field=id fieldValue=fieldValue substitute='<i class="fa fa-pencil"></i>'}}
+    {{else}}
+      {{#if $eq getView "table"}}
+        <tr>
+          <td>{{fieldTitle}}</td>
+          <td>{{>autoProfileFieldHelper_editable urlFieldValue=urlFieldValue fieldOptions=this isUrl=isUrl isHTML=isHTML isMarkdown=isMarkdown editingEnabled=editingEnabled context=context field=id fieldValue=fieldValue substitute='<i class="fa fa-pencil"></i>'}}</td>
+        </tr>
+      {{else}}
+        <li class="list-group-item text-right">
+          <span class="pull-left"><strong>{{fieldTitle}}</strong></span>
+          {{>autoProfileFieldHelper_editable urlFieldValue=urlFieldValue fieldOptions=this isUrl=isUrl isHTML=isHTML isMarkdown=isMarkdown editingEnabled=editingEnabled context=context field=id fieldValue=fieldValue substitute='<i class="fa fa-pencil"></i>'}}
+        </li>
+      {{/if}}
+    {{/if}}
   {{/if}}
-{{/if}}
 </template>
 
 <template name="autoProfileField_string_textarea">

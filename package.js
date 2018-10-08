@@ -1,6 +1,6 @@
 Package.describe({
     summary: "Generate profile pages / data-sheets based on simpl-schema",
-    version: "0.0.8",
+    version: "0.0.9",
     name: "d3k4y:meteor-autoprofile",
     git: "https://github.com/d3k4y/meteor-autoprofile"
 });
@@ -18,6 +18,7 @@ Package.onUse(function (api) {
         'tracker',
         'reactive-var',
         'aldeed:template-extension@4.1.0',
+        'corefi:meteor-autoform-enhanced-method@0.0.1',
         'corefi:meteor-simple-schema-functions@0.0.1',
     ]);
 

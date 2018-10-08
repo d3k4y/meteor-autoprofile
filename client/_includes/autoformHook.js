@@ -10,7 +10,7 @@ import toastr from 'toastr';
  */
 AutoForm.addHooks(['editUserAutoProfileForm'], {
     before: {
-        method: function (doc) {
+        enhancedmethod: function (doc) {
             const dbDoc = this.collection.findOne(this.currentDoc._id);
             const fieldId = window.autoprofileState_FieldId.get();
             const fieldIdSplit = fieldId.split('.');
@@ -25,10 +25,34 @@ AutoForm.addHooks(['editUserAutoProfileForm'], {
                 currentDoc = currentDoc ? currentDoc[currentName] : currentDoc;
                 currentDbDoc = currentDbDoc ? currentDbDoc[currentName] : currentDbDoc;
             }
+
+
+            const updateDoc = {};
+            _.keys(doc).forEach(key => {
+                console.error('keyToMerge', key);
+                if (doc[key] !== dbDoc[key]) {
+                    updateDoc[key] = doc[key];
+                }
+            });
+            updateDoc._id = this.currentDoc._id;
+            console.error('updateDoc', updateDoc);
+            this.result(updateDoc);
+
+            /*
+            const mergedDoc = _.merge({}, dbDoc || {}, doc);
+            mergedDoc._id = this.currentDoc._id;
+
+            console.error('mergedDoc', mergedDoc);
+
+            this.result(mergedDoc);
+            */
+
+            /*
             this.result({
                 _id: this.currentDoc._id,
                 profile: _.merge({}, dbDoc.profile || {}, doc.profile)
             });
+            */
         },
     },
     onSuccess(formType, result) { toastr.success('Das Benutzerprofil wurde erfolgreich aktualisiert'); },
@@ -56,10 +80,16 @@ AutoForm.addHooks(['addUserAutoProfileArrayItemForm'], {
                 currentDoc = currentDoc ? currentDoc[currentName] : currentDoc;
                 currentDbDoc = currentDbDoc ? currentDbDoc[currentName] : currentDbDoc;
             }
+
+            const mergedDoc = _.merge({}, dbDoc || {}, doc);
+            mergedDoc._id = this.currentDoc._id;
+            this.result(mergedDoc);
+            /*
             this.result({
                 _id: this.currentDoc._id,
                 profile: _.merge({}, dbDoc.profile || {}, doc.profile)
             });
+            */
         },
     },
     onSuccess(formType, result) { toastr.success('Das Benutzerprofil wurde erfolgreich aktualisiert'); },

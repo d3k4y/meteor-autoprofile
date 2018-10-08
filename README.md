@@ -3,7 +3,7 @@
 
 ## Disclaimer
 
-!WIP, the current version is 0.0.8!
+!WIP, the current version is 0.0.9!
 
 ## Features
 
