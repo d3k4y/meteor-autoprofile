@@ -303,6 +303,7 @@ Template.autoProfileFieldHelper_editable.helpers({
 
 
 // inherit default helpers
+Template.autoProfilePanel.inheritsHelpersFrom('autoProfileField_string');
 Template.autoProfileField_image.inheritsHelpersFrom('autoProfileField_string');
 Template.autoProfileField_file.inheritsHelpersFrom('autoProfileField_string');
 Template.autoProfileField_date.inheritsHelpersFrom('autoProfileField_string');
