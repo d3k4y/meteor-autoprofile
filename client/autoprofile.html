@@ -207,20 +207,14 @@
       {{#if fieldValue}}
         {{#if isMarkdown}}
           {{#markdown}}{{fieldValue}}{{/markdown}}
+        {{else if isHTML}}
+          {{{fieldValue}}}
+        {{else if urlFieldValue}}
+          <a href="{{urlFieldValue}}" target="_blank">{{fieldValue}}</a>
+        {{else if isUrl}}
+          <a href="{{fieldValue}}" target="_blank">{{fieldValue}}</a>
         {{else}}
-          {{#if isHTML}}
-            {{{fieldValue}}}
-          {{else}}
-            {{#if urlFieldValue}}
-              <a href="{{urlFieldValue}}" target="_blank">{{fieldValue}}</a>
-            {{else}}
-              {{#if isUrl}}
-                <a href="{{fieldValue}}" target="_blank">{{fieldValue}}</a>
-              {{else}}
-                {{fieldValue}}
-              {{/if}}
-            {{/if}}
-          {{/if}}
+          {{fieldValue}}
         {{/if}}
       {{else}}
         ?

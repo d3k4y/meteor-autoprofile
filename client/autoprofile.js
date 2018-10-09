@@ -201,6 +201,7 @@ Template.autoProfileField_string.helpers({
         return getContext(Template.instance());
     },
     isEditable() {
+        if (this.fieldOptions && this.fieldOptions.value) { return false; }
         let fieldOptions = Template.instance().data.fieldOptions;
         if (!fieldOptions) { fieldOptions = Template.instance().data; }
         return fieldOptions && (typeof fieldOptions.editable === 'undefined' || fieldOptions.editable);
@@ -225,6 +226,12 @@ Template.autoProfileField_string.helpers({
     fieldTitle() {
         const profileOptions = getOptions(Template.instance());
         const fieldSchema = SimpleSchemaFunctions.getFieldSchema(profileOptions.collection, this.id);
+        if (this.title) {
+            if (typeof this.title === 'function') {
+                return this.title.call(this, fieldSchema, profileOptions)
+            }
+            return this.title;
+        }
         return fieldSchema ? fieldSchema.label : null;
     },
     fieldId() {
@@ -232,7 +239,15 @@ Template.autoProfileField_string.helpers({
     },
     fieldValue() {
         const instance = Template.instance();
+        const profileOptions = getOptions(Template.instance());
+        const context = getContext(Template.instance());
         const fieldValue = getFieldValue(instance, this.id || this, this);
+        if (this.value) {
+            if (typeof this.value === 'function') {
+                return this.value.call(this, context, fieldValue, instance);
+            }
+            return this.value;
+        }
         if (typeof this.format === 'function') {
             return this.format.call(instance, fieldValue);
         }
@@ -302,6 +317,7 @@ Template.autoProfileField_string.events({
 
 Template.autoProfileFieldHelper_editable.helpers({
     isEditable() {
+        if (this.fieldOptions && this.fieldOptions.value) { return false; }
         const fieldOptions = Template.instance().data.fieldOptions;
         return fieldOptions && (typeof fieldOptions.editable === 'undefined' || fieldOptions.editable);
     }
