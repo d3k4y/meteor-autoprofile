@@ -90,14 +90,20 @@
     <div class="{{cardOrPanel}} {{cardOrPanel}}-default {{#if listContent}}list-{{cardOrPanel}}{{/if}} {{#if highlighted}}highlighted{{/if}}">
 
       <div class="{{cardOrPanel}}-{{headerOrHeading}}  cf-card__card-header">
-        {{#if titleField}}
-          {{> DynamicTemplate template=getTemplate data=titleField}}
+        {{#with titleField}}
+          {{#if group}}
+            {{#each group}}
+              {{> DynamicTemplate template=getTemplate data=this}}
+            {{/each}}
+          {{else}}
+            {{> DynamicTemplate template=getTemplate data=this}}
+          {{/if}}
         {{else}}
           {{panelTitle}}
           {{#if icon}}
             <i class="fa fa-{{icon}} fa-1x"></i>
           {{/if}}
-        {{/if}}
+        {{/with}}
       </div>
 
       {{#if valueOnly}}
@@ -118,12 +124,31 @@
         </table>
       {{else}}
         <ul class="list-group">
+
           {{#with field}}
-            <li class="list-group-item text-right"><span class="pull-left"><strong>{{fieldTitle}}</strong></span>{{> DynamicTemplate template=getTemplate data=this}}</li>
+            {{#if group}}
+              <li class="list-group-item text-right"><span class="pull-left"><strong>{{fieldTitle}}</strong></span>
+                {{#each group}}
+                  {{> DynamicTemplate template=getTemplate data=this}}
+                {{/each}}
+              </li>
+            {{else}}
+              <li class="list-group-item text-right"><span class="pull-left"><strong>{{fieldTitle}}</strong></span>{{> DynamicTemplate template=getTemplate data=this}}</li>
+            {{/if}}
           {{/with}}
+
           {{#each fields}}
-            <li class="list-group-item text-right"><span class="pull-left"><strong>{{fieldTitle}}</strong></span>{{> DynamicTemplate template=getTemplate data=this}}</li>
+            {{#if group}}
+              <li class="list-group-item text-right"><span class="pull-left"><strong>{{fieldTitle}}</strong></span>
+                {{#each group}}
+                  {{> DynamicTemplate template=getTemplate data=this}}
+                {{/each}}
+              </li>
+            {{else}}
+              <li class="list-group-item text-right"><span class="pull-left"><strong>{{fieldTitle}}</strong></span>{{> DynamicTemplate template=getTemplate data=this}}</li>
+            {{/if}}
           {{/each}}
+
         </ul>
       {{/if}}
 
@@ -188,16 +213,21 @@
   {{/if}}
 </template>
 
+<template name="autoProfileField_fileReference">
+  autoProfileField_fileReference: {{fieldValue}} {{referencedObject}}
+  {{#if fieldValue}}
+    <img id="autoprofile-field-{{fieldId}}" data-field-id="{{fieldId}}" class="autoprofile-field {{#if isEditable}}editable{{/if}}" src="/cdn/storage/{{fieldValue._collectionName}}/{{fieldValue._id}}/original/{{fieldValue._id}}.{{fieldValue.extension}}" width="320" />
+  {{else}}
+    {{#if placeholder}}
+      <img id="autoprofile-field-{{fieldId}}" data-field-id="{{fieldId}}" class="autoprofile-field {{#if isEditable}}editable{{/if}}" src="{{placeholder}}" width="320" /> <!--nobody.jpg-->
+    {{/if}}
+  {{/if}}
+</template>
+
 
 <!-- Field Types -->
 <template name="autoProfileField_string">
-  {{#if group}}
-    {{#each group}}
-      {{>autoProfileFieldHelper_editable urlFieldValue=urlFieldValue fieldOptions=this isUrl=isUrl isHTML=isHTML isMarkdown=isMarkdown editingEnabled=editingEnabled context=context field=id fieldValue=fieldValue substitute='<i class="fa fa-pencil"></i>'}}
-    {{/each}}
-  {{else}}
-    {{>autoProfileFieldHelper_editable urlFieldValue=urlFieldValue fieldOptions=this isUrl=isUrl isHTML=isHTML isMarkdown=isMarkdown editingEnabled=editingEnabled context=context field=id fieldValue=fieldValue substitute='<i class="fa fa-pencil"></i>'}}
-  {{/if}}
+  {{>autoProfileFieldHelper_editable urlFieldValue=urlFieldValue fieldOptions=this isUrl=isUrl isHTML=isHTML isMarkdown=isMarkdown editingEnabled=editingEnabled context=context field=id fieldValue=fieldValue substitute='<i class="fa fa-pencil"></i>'}}
 </template>
 
 <template name="autoProfileField_string_textarea">
@@ -215,20 +245,23 @@
 </template>
 
 <template name="autoProfileField_file">
-  <li class="list-group-item text-right">
-    <span class="pull-left"><strong>{{fieldTitle}}</strong></span>
-    {{#if fieldValue}}
-      <a href="/cdn/storage/{{fieldValue._collectionName}}/{{fieldValue._id}}/original/{{fieldValue._id}}.{{fieldValue.extension}}" target="_blank">{{fieldValue.name}}</a>
-    {{else}}
-      ?
-    {{/if}}
-  </li>
+  <span class="pull-left"><strong>{{fieldTitle}}</strong></span>
+  {{#if fieldValue}}
+    <a href="/cdn/storage/{{fieldValue._collectionName}}/{{fieldValue._id}}/original/{{fieldValue._id}}.{{fieldValue.extension}}" target="_blank">{{fieldValue.name}}</a>
+  {{else}}
+    ?
+  {{/if}}
 </template>
 
 <template name="autoProfileField_date">
-  {{fieldValue}}
+  <span id="autoprofile-field-{{fieldId}}" class="autoprofile-field" data-field-id="{{fieldId}}">{{fieldValue}}</span>
 </template>
 
+<template name="autoProfileField_object">
+  {{fieldValueAsJSON}}
+</template>
+
+<!-- TODO: make it possible to somehow switch view here -->
 <template name="autoProfileField_array">
   <ul class="list-group" data-field-id="{{fieldId}}" data-field-type="autoProfileField_array">
     {{#each fieldValue}}
@@ -280,9 +313,4 @@
       {{/if}}
     </ul>
   {{/if}}
-</template>
-
-
-<template name="autoProfileField_object">
-  {{fieldValueAsJSON}}
 </template>

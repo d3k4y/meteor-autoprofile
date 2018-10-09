@@ -105,6 +105,7 @@ function getFieldValue (templateInstance, id, context, options) {
 function getTemplate (templateInstance, context) {
     const profileOptions = getOptions(templateInstance);
     const fullName = context.namespace ? `${context.namespace}.${context.id || context.name}` : context.id || context.name;
+    if (context.type) { return context.type; }
     const fieldSchema = SimpleSchemaFunctions.getFieldSchema(profileOptions.collection, fullName) || SimpleSchemaFunctions.getFieldSchema(profileOptions.collection, context.id);
     if (fieldSchema) {
         switch (fieldSchema.type.singleType) {
@@ -121,11 +122,16 @@ function getTemplate (templateInstance, context) {
                         return "autoProfileField_string_textarea";
                     }
                     const afFieldInput = autoform.afFieldInput;
-                    if (afFieldInput && afFieldInput.type === "fileUpload") {
-                        if (afFieldInput.accept && afFieldInput.accept.substr(0, 6) === "image/") {
-                            return "autoProfileField_image";
+                    if (afFieldInput) {
+                        switch (afFieldInput.type) {
+                            case 'fileUpload':
+                                if (afFieldInput.accept && afFieldInput.accept.substr(0, 6) === "image/") {
+                                    return "autoProfileField_image";
+                                }
+                                return "autoProfileField_file";
+                            case 'fileUploadReference':
+                                return "autoProfileField_fileReference";
                         }
-                        return "autoProfileField_file";
                     }
                 }
                 return "autoProfileField_string";
@@ -312,6 +318,7 @@ Template.autoProfileField_array.inheritsHelpersFrom('autoProfileField_string');
 Template.autoProfileField_object.inheritsHelpersFrom('autoProfileField_string');
 Template.autoProfileField_array_object.inheritsHelpersFrom('autoProfileField_string');
 Template.autoProfileField_string_reference.inheritsHelpersFrom('autoProfileField_string');
+Template.autoProfileField_fileReference.inheritsHelpersFrom('autoProfileField_string');
 
 // Template.autoProfileFieldHelper_editable.inheritsHelpersFrom('autoProfileField_string');
 
@@ -387,5 +394,25 @@ Template.autoProfileField_array_object.helpers({
 Template.autoProfileField_object.helpers({
     fieldValueAsJSON() {
         return JSON.stringify(getFieldValue(Template.instance(), this.id, this));
+    }
+});
+
+
+Template.autoProfileField_fileReference.helpers({
+    referencedObject() {
+        const instance = Template.instance();
+        const fieldValue = getFieldValue(instance, this.id, this);
+        const profileOptions = getOptions(instance);
+        const fieldSchema = SimpleSchemaFunctions.getFieldSchema(profileOptions.collection, this.id);
+        const afFieldInput = _.get(fieldSchema, 'autoform.afFieldInput');
+        if (afFieldInput) {
+            const collection = window[afFieldInput.collection];
+            if (collection) {
+                const referencedObject = collection.findOne(fieldValue);
+                console.error('autoProfileField_fileReference referencedObject', this, instance, fieldSchema, afFieldInput.collection, fieldValue, referencedObject);
+                return referencedObject;
+            }
+        }
+
     }
 });
