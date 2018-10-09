@@ -106,6 +106,7 @@ function getTemplate (templateInstance, context) {
     const profileOptions = getOptions(templateInstance);
     const fullName = context.namespace ? `${context.namespace}.${context.id || context.name}` : context.id || context.name;
     if (context.type) { return context.type; }
+    if (context.template) { return context.template; }
     const fieldSchema = SimpleSchemaFunctions.getFieldSchema(profileOptions.collection, fullName) || SimpleSchemaFunctions.getFieldSchema(profileOptions.collection, context.id);
     if (fieldSchema) {
         switch (fieldSchema.type.singleType) {
