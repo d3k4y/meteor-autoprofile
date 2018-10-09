@@ -312,6 +312,7 @@ Template.autoProfileFieldHelper_editable.helpers({
 Template.autoProfilePanel.inheritsHelpersFrom('autoProfileField_string');
 Template.autoProfileField_image.inheritsHelpersFrom('autoProfileField_string');
 Template.autoProfileField_file.inheritsHelpersFrom('autoProfileField_string');
+Template.autoProfileField_fileCheck.inheritsHelpersFrom('autoProfileField_string');
 Template.autoProfileField_date.inheritsHelpersFrom('autoProfileField_string');
 Template.autoProfileField_string_textarea.inheritsHelpersFrom('autoProfileField_string');
 Template.autoProfileField_array.inheritsHelpersFrom('autoProfileField_string');
@@ -325,12 +326,26 @@ Template.autoProfileField_fileReference.inheritsHelpersFrom('autoProfileField_st
 // inherit default eventmap
 Template.autoProfileField_image.inheritsEventsFrom('autoProfileField_string');
 Template.autoProfileField_file.inheritsEventsFrom('autoProfileField_string');
+Template.autoProfileField_fileCheck.inheritsEventsFrom('autoProfileField_string');
 Template.autoProfileField_date.inheritsEventsFrom('autoProfileField_string');
 Template.autoProfileField_string_textarea.inheritsEventsFrom('autoProfileField_string');
 Template.autoProfileField_array.inheritsEventsFrom('autoProfileField_string');
 Template.autoProfileField_object.inheritsEventsFrom('autoProfileField_string');
 Template.autoProfileField_array_object.inheritsEventsFrom('autoProfileField_string');
 
+
+Template.autoProfileField_fileCheck.helpers({
+    getLink() {
+        if (typeof this.link === 'function') {
+            const instance = Template.instance();
+            const fieldValue = getFieldValue(instance, this.id, this);
+            const fieldSchema = SimpleSchemaFunctions.getFieldSchema(getOptions(instance).collection, this.id);
+            console.error('getLink', this);
+            return this.link.call(this, fieldValue, fieldSchema);
+        }
+        return null;
+    }
+});
 
 /* Extend Field: String ID Reference to different Collection */
 Template.autoProfileField_string_reference.helpers({

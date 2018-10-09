@@ -107,12 +107,14 @@
       </div>
 
       {{#if valueOnly}}
-        {{#with field}}
-          {{> DynamicTemplate template=getTemplate data=this}}
-        {{/with}}
-        {{#each fields}}
-          {{> DynamicTemplate template=getTemplate data=this}}
-        {{/each}}
+        <div class="card-body">
+          {{#with field}}
+            {{> DynamicTemplate template=getTemplate data=this}}
+          {{/with}}
+          {{#each fields}}
+            {{> DynamicTemplate template=getTemplate data=this}}
+          {{/each}}
+        </div>
       {{else if $eq view "table"}}
         <table class="table">
           {{#with field}}
@@ -122,6 +124,42 @@
             <tr><td>{{fieldTitle}}</td><td>{{> DynamicTemplate template=getTemplate data=this}}</td></tr>
           {{/each}}
         </table>
+      {{else if $eq view "carddeck"}}
+        <div class="card-body">
+
+          {{#each decks}}
+            <div class="card-deck">
+              {{#each fields}}
+                <div class="card">
+                  <div class="card-body">
+                    {{> DynamicTemplate template=getTemplate data=this}}
+                  </div>
+                </div>
+              {{/each}}
+            </div>
+          {{/each}}
+
+          {{!--
+          <div class="card-deck">
+            <div class="card">
+              <div class="card-body">
+
+                <span class="float-right icon-check cf-icon cf-icon-big"> </span>
+                <a href="/dealcockpit/eAWoBvrJNrAjxJfiW?initialItem=7LGdLzvoN8BRaddqs">Objektbilder</a>
+
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-body">
+
+                <span class="float-right icon-cross cf-icon cf-icon-big"> </span> Flurkarte / Lageplan
+
+              </div>
+            </div>
+          </div>
+          --}}
+
+        </div>
       {{else}}
         <ul class="list-group">
 
@@ -250,6 +288,15 @@
     <a href="/cdn/storage/{{fieldValue._collectionName}}/{{fieldValue._id}}/original/{{fieldValue._id}}.{{fieldValue.extension}}" target="_blank">{{fieldValue.name}}</a>
   {{else}}
     ?
+  {{/if}}
+</template>
+
+<template name="autoProfileField_fileCheck">
+  {{#if fieldValue}}
+    <span class="float-right icon-check cf-icon cf-icon-big"> </span>
+    <a href="{{getLink}}">{{fieldTitle}}</a>
+  {{else}}
+    <span class="float-right icon-cross cf-icon cf-icon-big"> </span> {{fieldTitle}}
   {{/if}}
 </template>
 
