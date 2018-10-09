@@ -228,7 +228,7 @@ Template.autoProfileField_string.helpers({
         const fieldSchema = SimpleSchemaFunctions.getFieldSchema(profileOptions.collection, this.id);
         if (this.title) {
             if (typeof this.title === 'function') {
-                return this.title.call(this, fieldSchema, profileOptions)
+                return this.title.call(this, fieldSchema, profileOptions);
             }
             return this.title;
         }
