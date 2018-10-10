@@ -18,10 +18,11 @@
           {{>autoProfileRow}}
         {{/each}}
       {{/if}}
-      {{#afModal  formId="editUserAutoProfileForm"
+      {{#afModal  formId=getEditFormId
                   fields=getFields
                   collection=getOptions.collectionName
                   meteormethod=getOptions.method
+                  meteormethodargs=getOptions.methodargs
                   doc=getContext._id
                   meteorupdatemethod="enhancedmethod"
                   operation="update"
@@ -30,23 +31,22 @@
                   placeholder=true
                   template = "bootstrap4"
                   title="Profil bearbeiten"
-                  backdrop="true"
+                  backdrop=true
                   class="btn btn-primary cf-button-primary js-edit-field-afmodalbutton d-none"
       }}<span class="icon-user"></span> Profil bearbeiten{{/afModal}}
 
-      {{#afModal  formId="addUserAutoProfileArrayItemForm"
+      {{#afModal  formId="AutoProfileAddArrayItemForm"
                   fields=getFields
                   collection=getOptions.collectionName
                   meteormethod=getOptions.method
                   doc=getContext._id
-                  meteorupdatemethod="enhancedmethod"
                   operation="update"
                   buttonContent="Speichern"
                   buttonClasses="btn cf-button-modals p-2"
                   placeholder=true
                   template = "bootstrap4"
                   title="Eintrag Hinzufügen"
-                  backdrop="true"
+                  backdrop=true
                   class="btn btn-primary cf-button-primary js-add-array-item-afmodalbutton d-none"
       }}<span class="icon-user"></span> Hinzufügen{{/afModal}}
     </div>
@@ -107,14 +107,23 @@
       </div>
 
       {{#if valueOnly}}
-        <div class="card-body">
+        {{#if noBody}}
           {{#with field}}
             {{> DynamicTemplate template=getTemplate data=this}}
           {{/with}}
           {{#each fields}}
             {{> DynamicTemplate template=getTemplate data=this}}
           {{/each}}
-        </div>
+        {{else}}
+          <div class="card-body">
+            {{#with field}}
+              {{> DynamicTemplate template=getTemplate data=this}}
+            {{/with}}
+            {{#each fields}}
+              {{> DynamicTemplate template=getTemplate data=this}}
+            {{/each}}
+          </div>
+        {{/if}}
       {{else if $eq view "table"}}
         <table class="table">
           {{#with field}}

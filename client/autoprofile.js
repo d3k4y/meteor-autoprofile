@@ -167,6 +167,10 @@ Template.autoProfile.helpers({
     },
     getOptions() {
         return Template.instance().data.options;
+    },
+    getEditFormId() {
+        const options = Template.instance().data.options;
+        return options.updateType === 'updateSet' ? 'AutoProfileEditForm_UpdateSet' : 'AutoProfileEditForm_UpdateDoc';
     }
 });
 
@@ -238,11 +242,19 @@ Template.autoProfileField_string.helpers({
     fieldId() {
         return this.id || this;
     },
-    fieldValue() {
+    fieldValue(raw = false) {
         const instance = Template.instance();
         const profileOptions = getOptions(Template.instance());
         const context = getContext(Template.instance());
         const fieldValue = getFieldValue(instance, this.id || this, this);
+        const fieldSchema = SimpleSchemaFunctions.getFieldSchema(profileOptions.collection, this.id);
+        const autoformOptions = _.get(fieldSchema, 'autoform.options');
+        if (autoformOptions) {
+            const option = _.find(autoformOptions, function(data) { return data.value === fieldValue; });
+            if (option) {
+                return option.label;
+            }
+        }
         if (this.value) {
             if (typeof this.value === 'function') {
                 return this.value.call(this, context, fieldValue, instance);
