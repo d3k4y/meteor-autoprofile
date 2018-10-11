@@ -9,7 +9,7 @@ import toastr from "toastr";
 
 import {SimpleSchemaFunctions} from "meteor/corefi:meteor-simple-schema-functions";
 
-import './_includes/autoformHook';
+import './_includes/autoformHooks';
 import './autoprofile.html';
 import './autoprofile.css';
 

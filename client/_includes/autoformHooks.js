@@ -44,6 +44,11 @@ AutoForm.addHooks(['AutoProfileEditForm_UpdateSet', 'AutoProfileEditForm_UpdateS
             this.result(updateDoc);
         },
     },
+    onSuccess(formType, result) { toastr.success('Das Benutzerprofil wurde erfolgreich aktualisiert'); },
+    onError(formType, error) { toastr.error(`Beim Erstellen des Benutzerprofils ist ein Fehler aufgetreten: ${error}`); }
+});
+
+AutoForm.addHooks(['AutoProfileEditForm_UpdateSetQuick'], {
     after: {
         enhancedmethod: function (foo, bar, bla) {
             const parent = $(this.template.firstNode.parentNode);
@@ -53,8 +58,6 @@ AutoForm.addHooks(['AutoProfileEditForm_UpdateSet', 'AutoProfileEditForm_UpdateS
             Blaze.remove(quickformTemplate.view);
         }
     },
-    onSuccess(formType, result) { toastr.success('Das Benutzerprofil wurde erfolgreich aktualisiert'); },
-    onError(formType, error) { toastr.error(`Beim Erstellen des Benutzerprofils ist ein Fehler aufgetreten: ${error}`); }
 });
 
 AutoForm.addHooks(['AutoProfileEditForm_UpdateDoc'], {
@@ -74,13 +77,9 @@ AutoForm.addHooks(['AutoProfileEditForm_UpdateDoc'], {
                 currentDoc = currentDoc ? currentDoc[currentName] : currentDoc;
                 currentDbDoc = currentDbDoc ? currentDbDoc[currentName] : currentDbDoc;
             }
-
             const mergedDoc = _.merge({}, dbDoc || {}, doc);
             mergedDoc._id = this.currentDoc._id;
             const mydoc = _.cloneDeep(mergedDoc);
-
-            // console.error('mergedDoc', mergedDoc, this.currentDoc._id, mydoc);
-
             this.result(mydoc);
 
             /*
@@ -116,10 +115,10 @@ AutoForm.addHooks(['AutoProfileAddArrayItemForm'], {
                 currentDoc = currentDoc ? currentDoc[currentName] : currentDoc;
                 currentDbDoc = currentDbDoc ? currentDbDoc[currentName] : currentDbDoc;
             }
-
             const mergedDoc = _.merge({}, dbDoc || {}, doc);
             mergedDoc._id = this.currentDoc._id;
             this.result(_.cloneDeep(mergedDoc));
+
             /*
             this.result({
                 _id: this.currentDoc._id,
