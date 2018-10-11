@@ -44,7 +44,11 @@ AutoForm.addHooks(['AutoProfileEditForm_UpdateSet', 'AutoProfileEditForm_UpdateS
             this.result(updateDoc);
         },
     },
-    onSuccess(formType, result) { toastr.success('Das Benutzerprofil wurde erfolgreich aktualisiert'); },
+    onSuccess(formType, result) {
+        console.error('onSuccess', this);
+        // const autoProfileTemplate = this.template.view.template.parent((instance) => { return instance.view.name === 'Template.autoProfile'; });
+        toastr.success('Das Benutzerprofil wurde erfolgreich aktualisiert');
+    },
     onError(formType, error) { toastr.error(`Beim Erstellen des Benutzerprofils ist ein Fehler aufgetreten: ${error}`); }
 });
 
