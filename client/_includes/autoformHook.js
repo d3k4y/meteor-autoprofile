@@ -1,3 +1,4 @@
+import {Blaze} from "meteor/blaze";
 // eslint-disable-next-line import/no-unresolved
 import {AutoForm} from 'meteor/aldeed:autoform';
 import {_} from "meteor/erasaur:meteor-lodash";
@@ -8,12 +9,13 @@ import toastr from 'toastr';
  * DOCUMENTATION:
  *      - https://github.com/aldeed/meteor-autoform#callbackshooks
  */
-AutoForm.addHooks(['AutoProfileEditForm_UpdateSet'], {
+AutoForm.addHooks(['AutoProfileEditForm_UpdateSet', 'AutoProfileEditForm_UpdateSetQuick'], {
     before: {
         enhancedmethod: function (doc) {
             const dbDoc = this.collection.findOne(this.currentDoc._id);
             const fieldId = window.autoprofileState_FieldId.get();
             const fieldIdSplit = fieldId.split('.');
+
             let currentDoc = doc;
             let currentDbDoc = dbDoc;
             for (let i = 0; i < fieldIdSplit.length; i++) {
@@ -26,19 +28,30 @@ AutoForm.addHooks(['AutoProfileEditForm_UpdateSet'], {
                 currentDbDoc = currentDbDoc ? currentDbDoc[currentName] : currentDbDoc;
             }
 
-            console.error('AutoProfileEditForm', this);
-
             const updateDoc = {};
             _.keys(doc).forEach(key => {
-                console.error('keyToMerge', key);
                 if (doc[key] !== dbDoc[key]) {
                     updateDoc[key] = doc[key];
                 }
             });
             updateDoc._id = this.currentDoc._id;
-            console.error('updateDoc', updateDoc);
+
+            const beforeUpdateHook = window[_.get(this, 'formAttributes.callContext.onBeforeUpdate')];
+            if (typeof beforeUpdateHook === 'function') {
+                beforeUpdateHook.call(this, dbDoc, updateDoc);
+            }
+
             this.result(updateDoc);
         },
+    },
+    after: {
+        enhancedmethod: function (foo, bar, bla) {
+            const parent = $(this.template.firstNode.parentNode);
+            const field = parent.find('.autoprofile-field');
+            field.removeClass('d-none');
+            const quickformTemplate = this.template.parent((instance) => { return instance.view.name === 'Template.quickForm'; });
+            Blaze.remove(quickformTemplate.view);
+        }
     },
     onSuccess(formType, result) { toastr.success('Das Benutzerprofil wurde erfolgreich aktualisiert'); },
     onError(formType, error) { toastr.error(`Beim Erstellen des Benutzerprofils ist ein Fehler aufgetreten: ${error}`); }
@@ -66,7 +79,7 @@ AutoForm.addHooks(['AutoProfileEditForm_UpdateDoc'], {
             mergedDoc._id = this.currentDoc._id;
             const mydoc = _.cloneDeep(mergedDoc);
 
-            console.error('mergedDoc', mergedDoc, this.currentDoc._id, mydoc);
+            // console.error('mergedDoc', mergedDoc, this.currentDoc._id, mydoc);
 
             this.result(mydoc);
 

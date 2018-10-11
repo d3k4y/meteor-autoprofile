@@ -24,6 +24,7 @@
                   meteormethod=getOptions.method
                   meteormethodargs=getOptions.methodargs
                   doc=getContext._id
+                  callContext=getFieldDefinition
                   meteorupdatemethod="enhancedmethod"
                   operation="update"
                   buttonContent="Speichern"
@@ -33,6 +34,9 @@
                   title="Profil bearbeiten"
                   backdrop=true
                   class="btn btn-primary cf-button-primary js-edit-field-afmodalbutton d-none"
+                  validationScope="fields"
+                  validation="keyup"
+                  doNotClean=true
       }}<span class="icon-user"></span> Profil bearbeiten{{/afModal}}
 
       {{#afModal  formId="AutoProfileAddArrayItemForm"
@@ -40,6 +44,7 @@
                   collection=getOptions.collectionName
                   meteormethod=getOptions.method
                   doc=getContext._id
+                  callContext=getFieldDefinition
                   operation="update"
                   buttonContent="Speichern"
                   buttonClasses="btn cf-button-modals p-2"
@@ -206,7 +211,7 @@
 
 <!-- Value Rendering -->
 <template name="autoProfileFieldHelper_editable">
-  {{#if editingEnabled}}
+  {{#if $and editingEnabled useEditableText}}
     {{> editableText
           context=context collection="freelancers" field=field
           wysiwyg=wysiwyg acceptEmpty=acceptEmpty substitute=substitute class=class inputClass=inputClass

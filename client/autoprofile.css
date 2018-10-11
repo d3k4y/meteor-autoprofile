@@ -127,3 +127,7 @@
 .autoprofile-container .autoprofile-field {
   position: relative;
 }
+
+.autoprofile-container .autoprofile-quickform label {
+  display: none;
+}

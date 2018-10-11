@@ -1,11 +1,11 @@
 /* eslint-disable consistent-return,default-case,no-case-declarations,meteor/template-names,meteor/prefix-eventmap-selectors */
 import {Meteor} from 'meteor/meteor';
+import {Blaze} from "meteor/blaze";
 import {Template} from 'meteor/templating';
 import {ReactiveVar} from 'meteor/reactive-var';
 import {_} from "meteor/erasaur:meteor-lodash";
 import moment from 'moment';
 import toastr from "toastr";
-import wNumb from "wnumb";
 
 import {SimpleSchemaFunctions} from "meteor/corefi:meteor-simple-schema-functions";
 
@@ -18,7 +18,6 @@ function dbg(...params) {
     // console.error.apply(this, params);
 }
 
-/* AutoProfile public methods */
 function getData (templateInstance) {
     const autoProfileTemplate = templateInstance.parent((instance) => { return instance.view.name === 'Template.autoProfile'; });
     if (autoProfileTemplate) {
@@ -98,10 +97,6 @@ function getFieldValue (templateInstance, id, context, options) {
     return null;
 }
 
-
-// TODO, FIXME: missing cases:
-//   - decimal
-//   - integer
 function getTemplate (templateInstance, context) {
     const profileOptions = getOptions(templateInstance);
     const fullName = context.namespace ? `${context.namespace}.${context.id || context.name}` : context.id || context.name;
@@ -155,6 +150,7 @@ function getTemplate (templateInstance, context) {
 
 Template.autoProfile.onCreated(function onRendered() {
     window.autoprofileState_FieldId = this.currentFieldId = new ReactiveVar('');
+    window.autoprofileState_FieldDefinition = this.currentFieldDefinition = new ReactiveVar(null);
     window.autoprofileState_ArrayIndex = this.currentArrayIndex = new ReactiveVar('');
 });
 
@@ -162,11 +158,17 @@ Template.autoProfile.helpers({
     getFields() {
         return Template.instance().currentFieldId.get();
     },
+    getFieldDefinition() {
+        return Template.instance().currentFieldDefinition.get();
+    },
     getContext() {
         return Template.instance().data.myContext;
     },
     getOptions() {
         return Template.instance().data.options;
+    },
+    getInstance() {
+        return Template.instance();
     },
     getEditFormId() {
         const options = Template.instance().data.options;
@@ -262,7 +264,7 @@ Template.autoProfileField_string.helpers({
             return this.value;
         }
         if (typeof this.format === 'function') {
-            return this.format.call(instance, fieldValue);
+            return this.format.call(instance, fieldValue, fieldSchema);
         }
         return fieldValue;
     },
@@ -277,21 +279,47 @@ Template.autoProfileField_string.helpers({
 Template.autoProfileField_string.events({
     'click .autoprofile-field'(event, templateInstance, doc) {
         const autoProfileTemplate = templateInstance.parent((instance) => { return instance.view.name === 'Template.autoProfile'; });
+        const autoProfileOptions = autoProfileTemplate.data.options;
         const $elem = $(event.currentTarget);
-        // TODO: check for autoProfileTemplate.data.options.editingEnabled ?
-        if (typeof templateInstance.data.editable === 'undefined' || templateInstance.data.editable) {
+        if (autoProfileOptions.editingEnabled && (typeof templateInstance.data.editable === 'undefined' || templateInstance.data.editable)) {
             const arrayIndex = $elem.attr('data-array-index');
             autoProfileTemplate.currentArrayIndex.set(arrayIndex);
             autoProfileTemplate.currentFieldId.set(arrayIndex ? `${$elem.closest('[data-field-id]').attr('data-field-id')}.${arrayIndex}` : $elem.attr('data-field-id'));
-            Meteor.defer(() => { $('.autoprofile-container .js-edit-field-afmodalbutton')[0].click(); });
+            autoProfileTemplate.currentFieldDefinition.set(this);
+            if (this.inplaceEditing || (this.fieldOptions && this.fieldOptions.inplaceEditing)) {
+                $elem.addClass('d-none');
+                Blaze.renderWithData(Template.quickForm, {
+                    id: autoProfileOptions.updateType === 'updateSet' ? 'AutoProfileEditForm_UpdateSetQuick' : 'AutoProfileEditForm_UpdateDocQuick',
+                    fields: autoProfileTemplate.currentFieldId.get(),
+                    collection: autoProfileOptions.collectionName,
+                    meteormethod: autoProfileOptions.method,
+                    meteormethodargs: autoProfileOptions.methodargs,
+                    doc: autoProfileTemplate.data.myContext,
+                    callContext: autoProfileTemplate.currentFieldDefinition.get(),
+                    type: 'enhancedmethod',
+                    operation: 'update',
+                    buttonContent: 'Speichern',
+                    buttonClasses: 'btn cf-button-modals p-2 d-none',
+                    placeholder: true,
+                    template: 'bootstrap4',
+                    title: 'Profil bearbeiten',
+                    class: 'autoprofile-quickform',
+                    validationScope: 'fields',
+                    validation: 'keyup',
+                    doNotClean: true
+                }, $elem.parent()[0]);
+            } else {
+                Meteor.defer(() => { $('.autoprofile-container .js-edit-field-afmodalbutton')[0].click(); });
+            }
         }
     },
 
     'click .js-autoprofile-add-array-item'(event, templateInstance, doc) {
         const autoProfileTemplate = templateInstance.parent((instance) => { return instance.view.name === 'Template.autoProfile'; });
         const $elem = $(event.currentTarget);
-        if (typeof templateInstance.data.editable === 'undefined' || templateInstance.data.editable) {
+        if (autoProfileTemplate.data.options.editingEnabled && (typeof templateInstance.data.editable === 'undefined' || templateInstance.data.editable)) {
             autoProfileTemplate.currentFieldId.set(`${$elem.closest('[data-field-id]').attr('data-field-id')}.999999`);
+            autoProfileTemplate.currentFieldDefinition.set(this);
             autoProfileTemplate.currentArrayIndex.set(null);
             Meteor.defer(() => { $('.autoprofile-container .js-add-array-item-afmodalbutton')[0].click(); });
         }
@@ -369,7 +397,6 @@ Template.autoProfileField_fileCheck.helpers({
             const instance = Template.instance();
             const fieldValue = getFieldValue(instance, this.id, this);
             const fieldSchema = SimpleSchemaFunctions.getFieldSchema(getOptions(instance).collection, this.id);
-            console.error('getLink', this);
             return this.link.call(this, fieldValue, fieldSchema);
         }
         return null;
