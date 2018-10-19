@@ -288,6 +288,7 @@ Template.autoProfileField_string.events({
             autoProfileTemplate.currentFieldDefinition.set(this);
             if (this.inplaceEditing || (this.fieldOptions && this.fieldOptions.inplaceEditing)) {
                 $elem.addClass('d-none');
+                const additionalButtonClasses = this.fieldOptions && this.fieldOptions.showButton ? '' : 'd-none';
                 Blaze.renderWithData(Template.quickForm, {
                     id: autoProfileOptions.updateType === 'updateSet' ? 'AutoProfileEditForm_UpdateSetQuick' : 'AutoProfileEditForm_UpdateDocQuick',
                     fields: autoProfileTemplate.currentFieldId.get(),
@@ -299,7 +300,7 @@ Template.autoProfileField_string.events({
                     type: 'enhancedmethod',
                     operation: 'update',
                     buttonContent: 'Speichern',
-                    buttonClasses: 'btn cf-button-modals p-2 d-none',
+                    buttonClasses: `btn cf-button-modals p-2 ${additionalButtonClasses}`,
                     placeholder: true,
                     template: 'bootstrap4',
                     title: 'Profil bearbeiten',
