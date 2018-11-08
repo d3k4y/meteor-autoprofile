@@ -77,7 +77,7 @@ function getFieldValue (templateInstance, id, context, options) {
                     }
                     // moment(value).format("DD.MM.YYYY [um] HH:mm")
                     return value;
-                } else if (fieldSchema.type.singleType === String && afFieldInput && afFieldInput.type === "fileUpload") {
+                } else if (fieldSchema.type.singleType === String && afFieldInput && (afFieldInput.type === "fileUpload" || afFieldInput.type === 'meteorAutoformUpload')) {
                     const collection = window[afFieldInput.collection];
                     if (collection) {
                         const file = collection.find({_id: value}).fetch();
@@ -121,6 +121,7 @@ function getTemplate (templateInstance, context) {
                     if (afFieldInput) {
                         switch (afFieldInput.type) {
                             case 'fileUpload':
+                            case 'meteorAutoformUpload':
                                 if (afFieldInput.accept && afFieldInput.accept.substr(0, 6) === "image/") {
                                     return "autoProfileField_image";
                                 }
