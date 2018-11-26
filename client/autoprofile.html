@@ -18,13 +18,14 @@
           {{>autoProfileRow}}
         {{/each}}
       {{/if}}
+
       {{#afModal  formId=getEditFormId
                   fields=getFields
-                  collection=getOptions.collectionName
-                  meteormethod=getOptions.method
-                  meteormethodargs=getOptions.methodargs
-                  doc=getContext._id
-                  callContext=getFieldDefinition
+                  collection=getCollectionName
+                  meteormethod=getMethod
+                  meteormethodargs=getMethodArgs
+                  doc=getDocId
+                  callContext=getCallContext
                   meteorupdatemethod="enhancedmethod"
                   operation="update"
                   buttonContent="Speichern"
@@ -41,10 +42,10 @@
 
       {{#afModal  formId="AutoProfileAddArrayItemForm"
                   fields=getFields
-                  collection=getOptions.collectionName
-                  meteormethod=getOptions.method
-                  doc=getContext._id
-                  callContext=getFieldDefinition
+                  collection=getCollectionName
+                  meteormethod=getMethod
+                  doc=getDocId
+                  callContext=getCallContext
                   operation="update"
                   buttonContent="Speichern"
                   buttonClasses="btn cf-button-modals p-2"
@@ -54,6 +55,21 @@
                   backdrop=true
                   class="btn btn-primary cf-button-primary js-add-array-item-afmodalbutton d-none"
       }}<span class="icon-user"></span> Hinzufügen{{/afModal}}
+
+      {{#afModal  formId="AutoProfileCreateReferenceDocAndAddArrayItemForm"
+                  fields=getFields
+                  collection=getCollectionName
+                  meteormethod=getMethod
+                  callContext=getCallContext
+                  operation="insert"
+                  buttonContent="Erstellen"
+                  buttonClasses="btn cf-button-modals p-2"
+                  placeholder=true
+                  template = "bootstrap4"
+                  title="Eintrag Hinzufügen"
+                  backdrop=true
+                  class="btn btn-primary cf-button-primary js-create-reference-doc-and-add-array-item-afmodalbutton d-none"
+      }}<span class="icon-user"></span> erstellen{{/afModal}}
     </div>
   {{else}}
     NO options found!
@@ -351,7 +367,7 @@
     <!--SUBLIST: TODO-->
     <ul class="list-group" data-field-id="{{fieldId}}" data-field-type="autoProfileField_array_object">
       {{#each fieldValue}}
-        <li class="list-group-item text-right autoprofile-field {{#if isEditable}}editable{{/if}}" data-array-index="{{@index}}">
+        <li class="list-group-item text-right autoprofile-field {{#if isEditable}}editable{{/if}}" data-array-index="{{@index}}" data-parent-field-id="{{..fieldId}}">
           <strong class="pull-left">{{{titleFieldValue}}}</strong>
           {{#if isFileField}}
             {{>autoProfileField_file}}

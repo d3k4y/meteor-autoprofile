@@ -67,6 +67,7 @@ AutoForm.addHooks(['AutoProfileEditForm_UpdateSetQuick'], {
 AutoForm.addHooks(['AutoProfileEditForm_UpdateDoc'], {
     before: {
         enhancedmethod: function (doc) {
+            console.error('AutoProfileEditForm_UpdateDoc this', this);
             const dbDoc = this.collection.findOne(this.currentDoc._id);
             const fieldId = window.autoprofileState_FieldId.get();
             const fieldIdSplit = fieldId.split('.');
@@ -121,7 +122,7 @@ AutoForm.addHooks(['AutoProfileAddArrayItemForm'], {
             }
             const mergedDoc = _.merge({}, dbDoc || {}, doc);
             mergedDoc._id = this.currentDoc._id;
-            this.result(_.cloneDeep(mergedDoc));
+            this.result(this.collection._c2._simpleSchema.clean(_.cloneDeep(mergedDoc)));
 
             /*
             this.result({
@@ -133,4 +134,34 @@ AutoForm.addHooks(['AutoProfileAddArrayItemForm'], {
     },
     onSuccess(formType, result) { toastr.success('Das Benutzerprofil wurde erfolgreich aktualisiert'); },
     onError(formType, error) { toastr.error(`Beim Speichern des Benutzerprofils ist ein Fehler aufgetreten: ${error}`); }
+});
+
+
+AutoForm.addHooks(['AutoProfileCreateReferenceDocAndAddArrayItemForm'], {
+    before: {
+        method: function (doc) {
+            const callContext = _.get(this, 'formAttributes.callContext');
+            doc[callContext.fieldName] = callContext.fieldValue;
+            const insertConf = _.get(callContext, 'fieldDefinition.reference.insert');
+            const callback = window.autoprofileState_ModifyCallback.get();
+            if (callback) {
+                doc = callback.call(this, doc, callContext.fieldDefinition);
+            }
+            this.result(doc);
+        },
+    },
+    onSuccess(formType, result) {
+        const fieldDefinition = _.get(this, 'formAttributes.callContext.fieldDefinition');
+        const callback = window.autoprofileState_SuccessCallback.get();
+        if (callback) {
+            callback.call(this, fieldDefinition);
+        }
+    },
+    onError(formType, error) {
+        const fieldDefinition = _.get(this, 'formAttributes.callContext.fieldDefinition');
+        const callback = window.autoprofileState_ErrorCallback.get();
+        if (callback) {
+            callback.call(this, fieldDefinition, error);
+        }
+    }
 });

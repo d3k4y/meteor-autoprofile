@@ -1,4 +1,5 @@
 /* eslint-disable consistent-return,default-case,no-case-declarations,meteor/template-names,meteor/prefix-eventmap-selectors */
+import {SimpleSchemaGroup} from "simpl-schema";
 import {Meteor} from 'meteor/meteor';
 import {Blaze} from "meteor/blaze";
 import {Template} from 'meteor/templating';
@@ -19,6 +20,8 @@ function dbg(...params) {
 }
 
 function getData (templateInstance) {
+    if (!templateInstance) { return undefined; }
+    if (templateInstance.view.name === 'Template.autoProfile') { return templateInstance.data;}
     const autoProfileTemplate = templateInstance.parent((instance) => { return instance.view.name === 'Template.autoProfile'; });
     if (autoProfileTemplate) {
         return autoProfileTemplate.data;
@@ -102,7 +105,11 @@ function getTemplate (templateInstance, context) {
     const fullName = context.namespace ? `${context.namespace}.${context.id || context.name}` : context.id || context.name;
     if (context.type) { return context.type; }
     if (context.template) { return context.template; }
-    const fieldSchema = SimpleSchemaFunctions.getFieldSchema(profileOptions.collection, fullName) || SimpleSchemaFunctions.getFieldSchema(profileOptions.collection, context.id);
+    const foreignCollection = window[_.get(context, 'reference.collectionName')];
+    const fullNameSplit = fullName ? fullName.split('.') : [];
+    let fieldSchema =
+        SimpleSchemaFunctions.getFieldSchema(foreignCollection || profileOptions.collection, fullName) ||
+        SimpleSchemaFunctions.getFieldSchema(foreignCollection || profileOptions.collection, context.id);
     if (fieldSchema) {
         switch (fieldSchema.type.singleType) {
             case Object: return "autoProfileField_object";
@@ -111,7 +118,7 @@ function getTemplate (templateInstance, context) {
             case String:
                 const autoform = fieldSchema.autoform;
                 if (context.reference) {
-                    return "autoProfileField_string_reference";
+                    return context.reference.reverse ? "autoProfileField_array_object" : "autoProfileField_string_reference";
                 }
                 if (autoform) {
                     if (autoform.rows > 0 || autoform.type === "markdown") {
@@ -133,11 +140,14 @@ function getTemplate (templateInstance, context) {
                 }
                 return "autoProfileField_string";
             case Array:
-                const subSchema = SimpleSchemaFunctions.getFieldSchema(profileOptions.collection, `${fullName}.$`);
+                const rootFieldName = fullNameSplit.length > 1 && fullName.indexOf('$') > -1 ? fullNameSplit[0] : fullName;
+                const subSchema = SimpleSchemaFunctions.getFieldSchema(foreignCollection || profileOptions.collection, `${rootFieldName}.$`);
                 if (subSchema) {
                     switch (subSchema.type.singleType) {
+                        case SimpleSchemaGroup:
                         case Object: return "autoProfileField_array_object";
                         case String: return "autoProfileField_array";
+                        default: if (typeof subSchema.type.singleType === 'object') { return "autoProfileField_array_object"; }
                     }
                 }
                 return "autoProfileField_array";
@@ -148,25 +158,64 @@ function getTemplate (templateInstance, context) {
     return "autoProfileField_string";
 }
 
+function getCollectionByName(collectionName) {
+    return window[collectionName];
+}
+
 
 Template.autoProfile.onCreated(function onRendered() {
     window.autoprofileState_FieldId = this.currentFieldId = new ReactiveVar('');
-    window.autoprofileState_FieldDefinition = this.currentFieldDefinition = new ReactiveVar(null);
+    window.autoprofileState_CallContext = this.currentCallContext = new ReactiveVar(null);
     window.autoprofileState_ArrayIndex = this.currentArrayIndex = new ReactiveVar('');
+    window.autoprofileState_CollectionName = this.currentCollectionName = new ReactiveVar(null);
+    window.autoprofileState_DocumentId = this.currentDocumentId = new ReactiveVar(null);
+    window.autoprofileState_Method = this.currentMethod = new ReactiveVar(null);
+    window.autoprofileState_ModifyCallback = this.currentModifyCallback = new ReactiveVar(null);
+    window.autoprofileState_SuccessCallback = this.currentSuccessCallback = new ReactiveVar(null);
+    window.autoprofileState_ErrorCallback = this.currentErrorCallback = new ReactiveVar(null);
+});
+
+Template.autoProfile.onRendered(function onRendered() {
+    const self = this;
+    $("#afModal").on("hidden.bs.modal", function () {
+        self.currentCollectionName.set(null);
+        self.currentDocumentId.set(null);
+        self.currentMethod.set(null);
+        self.currentModifyCallback.set(null);
+        self.currentSuccessCallback.set(null);
+        self.currentErrorCallback.set(null);
+    });
 });
 
 Template.autoProfile.helpers({
     getFields() {
         return Template.instance().currentFieldId.get();
     },
-    getFieldDefinition() {
-        return Template.instance().currentFieldDefinition.get();
+    getCallContext() {
+        return Template.instance().currentCallContext.get();
     },
     getContext() {
-        return Template.instance().data.myContext;
+        return getContext(Template.instance());
     },
     getOptions() {
         return Template.instance().data.options;
+    },
+    getMethod() {
+        const reactiveMethod = Template.instance().currentMethod.get();
+        return reactiveMethod ? reactiveMethod : Template.instance().data.options.method;
+    },
+    getMethodArgs() {
+        return Template.instance().data.options.methodargs;
+    },
+    getDocId() {
+        const context = getContext(Template.instance());
+        const docId = Template.instance().currentDocumentId.get();
+        const result = docId ? docId : context ? context._id : null;
+        return result;
+    },
+    getCollectionName() {
+        const collectionName = Template.instance().currentCollectionName.get();
+        return collectionName ? collectionName : Template.instance().data.options.collectionName;
     },
     getInstance() {
         return Template.instance();
@@ -247,8 +296,8 @@ Template.autoProfileField_string.helpers({
     },
     fieldValue(raw = false) {
         const instance = Template.instance();
-        const profileOptions = getOptions(Template.instance());
-        const context = getContext(Template.instance());
+        const profileOptions = getOptions(instance);
+        const context = getContext(instance);
         const fieldValue = getFieldValue(instance, this.id || this, this);
         const fieldSchema = SimpleSchemaFunctions.getFieldSchema(profileOptions.collection, this.id);
         const autoformOptions = _.get(fieldSchema, 'autoform.options');
@@ -267,6 +316,18 @@ Template.autoProfileField_string.helpers({
         if (typeof this.format === 'function') {
             return this.format.call(instance, fieldValue, fieldSchema);
         }
+        if (context && this.reference && this.reference.reverse && !raw) {
+            const selector = {};
+            const idSplit = this.id.split('.');
+            if (idSplit.length > 1) {
+                const subSelector = {};
+                subSelector[idSplit[2]] = context._id;
+                selector[idSplit[0]] = {$elemMatch: subSelector};
+            } else {
+                selector[this.id] = context._id;
+            }
+            return getCollectionByName(this.reference.collectionName).find(selector).fetch();
+        }
         return fieldValue;
     },
     urlFieldValue() {
@@ -279,25 +340,37 @@ Template.autoProfileField_string.helpers({
 
 Template.autoProfileField_string.events({
     'click .autoprofile-field'(event, templateInstance, doc) {
+        const $elem = $(event.currentTarget);
+        const $subElem = $elem.find('.autoprofile-title-field-label');
+        const $root = $elem.closest('.autoprofile-container');
         const autoProfileTemplate = templateInstance.parent((instance) => { return instance.view.name === 'Template.autoProfile'; });
         const autoProfileOptions = autoProfileTemplate.data.options;
-        const $elem = $(event.currentTarget);
         if (autoProfileOptions.editingEnabled && (typeof templateInstance.data.editable === 'undefined' || templateInstance.data.editable)) {
-            const arrayIndex = $elem.attr('data-array-index');
+            const arrayIndex = $elem.attr('data-array-index') || $elem.closest('.autoprofile-field').attr('data-array-index');
+            const collectionName = $subElem.attr('data-collection-name');
+            const docId = $subElem.attr('data-doc-id');
+            const fieldId = $subElem.attr('data-field-id');
+            let currentFieldId = fieldId ? fieldId : $elem.attr('data-field-id');
+            if (typeof arrayIndex !== 'undefined' && !_.get(templateInstance, 'data.reference')) {
+                currentFieldId = `${$elem.closest('[data-field-id]').attr('data-field-id')}.${arrayIndex}`;
+            }
+            const collection = typeof window !== 'undefined' ? window[collectionName] : global[collectionName];
             autoProfileTemplate.currentArrayIndex.set(arrayIndex);
-            autoProfileTemplate.currentFieldId.set(arrayIndex ? `${$elem.closest('[data-field-id]').attr('data-field-id')}.${arrayIndex}` : $elem.attr('data-field-id'));
-            autoProfileTemplate.currentFieldDefinition.set(this);
+            autoProfileTemplate.currentFieldId.set(currentFieldId);
+            autoProfileTemplate.currentCallContext.set(this);
+            autoProfileTemplate.currentCollectionName.set(collectionName);
+            autoProfileTemplate.currentDocumentId.set(docId);
             if (this.inplaceEditing || (this.fieldOptions && this.fieldOptions.inplaceEditing)) {
                 $elem.addClass('d-none');
                 const additionalButtonClasses = this.fieldOptions && this.fieldOptions.showButton ? '' : 'd-none';
                 Blaze.renderWithData(Template.quickForm, {
                     id: autoProfileOptions.updateType === 'updateSet' ? 'AutoProfileEditForm_UpdateSetQuick' : 'AutoProfileEditForm_UpdateDocQuick',
                     fields: autoProfileTemplate.currentFieldId.get(),
-                    collection: autoProfileOptions.collectionName,
+                    collection: $subElem.attr('data-collection-name') || autoProfileOptions.collectionName,
                     meteormethod: autoProfileOptions.method,
                     meteormethodargs: autoProfileOptions.methodargs,
-                    doc: autoProfileTemplate.data.myContext,
-                    callContext: autoProfileTemplate.currentFieldDefinition.get(),
+                    doc: docId ? collection.findOne(docId) : autoProfileTemplate.data.myContext,
+                    callContext: autoProfileTemplate.currentCallContext.get(),
                     type: 'enhancedmethod',
                     operation: 'update',
                     buttonContent: 'Speichern',
@@ -311,7 +384,7 @@ Template.autoProfileField_string.events({
                     doNotClean: true
                 }, $elem.parent()[0]);
             } else {
-                Meteor.defer(() => { $('.autoprofile-container .js-edit-field-afmodalbutton')[0].click(); });
+                Meteor.defer(() => { $root.find('.js-edit-field-afmodalbutton')[0].click(); });
             }
         }
     },
@@ -319,11 +392,29 @@ Template.autoProfileField_string.events({
     'click .js-autoprofile-add-array-item'(event, templateInstance, doc) {
         const autoProfileTemplate = templateInstance.parent((instance) => { return instance.view.name === 'Template.autoProfile'; });
         const $elem = $(event.currentTarget);
+        const $root = $elem.closest('.autoprofile-container');
         if (autoProfileTemplate.data.options.editingEnabled && (typeof templateInstance.data.editable === 'undefined' || templateInstance.data.editable)) {
-            autoProfileTemplate.currentFieldId.set(`${$elem.closest('[data-field-id]').attr('data-field-id')}.999999`);
-            autoProfileTemplate.currentFieldDefinition.set(this);
+            const collectionName = _.get(this, 'reference.collectionName');
+            const currentFieldId = this.reference ? _.get(this, 'titleField.id') : `${$elem.closest('[data-field-id]').attr('data-field-id')}.999999`;
+            autoProfileTemplate.currentFieldId.set(currentFieldId);
             autoProfileTemplate.currentArrayIndex.set(null);
-            Meteor.defer(() => { $('.autoprofile-container .js-add-array-item-afmodalbutton')[0].click(); });
+            autoProfileTemplate.currentCollectionName.set(collectionName);
+            autoProfileTemplate.currentDocumentId.set(null);
+            if (_.get(this, 'reference.reverse')) {
+                autoProfileTemplate.currentCallContext.set({
+                    fieldName: this.id,
+                    fieldValue: getContext(templateInstance)._id,
+                    fieldDefinition: this
+                });
+                autoProfileTemplate.currentMethod.set(_.get(this, 'reference.insert.method'));
+                autoProfileTemplate.currentModifyCallback.set(_.get(this, 'reference.insert.onBefore'));
+                autoProfileTemplate.currentSuccessCallback.set(_.get(this, 'reference.insert.onSuccess'));
+                autoProfileTemplate.currentErrorCallback.set(_.get(this, 'reference.insert.onError'));
+                Meteor.defer(() => { $root.find('.js-create-reference-doc-and-add-array-item-afmodalbutton')[0].click(); });
+            } else {
+                autoProfileTemplate.currentCallContext.set(this);
+                Meteor.defer(() => { $root.find('.js-add-array-item-afmodalbutton')[0].click(); });
+            }
         }
         event.preventDefault();
         event.stopPropagation();
@@ -333,23 +424,32 @@ Template.autoProfileField_string.events({
     'click .js-autoprofile-remove-array-item'(event, templateInstance, doc) {
         const profileOptions = getOptions(templateInstance);
         const $elem = $(event.currentTarget);
-        if (typeof templateInstance.data.editable === 'undefined' || templateInstance.data.editable) {
-            const $base = $elem.closest('[data-array-index]');
-            const arrayIndex = $base.attr('data-array-index');
-            const fieldIdSplit = `${$base.closest('[data-field-id]').attr('data-field-id')}`.split('.');
-            const dbDoc = profileOptions.collection.findOne(getContext(templateInstance)._id);
-            let currentDbDoc = dbDoc;
-            for (let i = 0; i < fieldIdSplit.length; i++) {
-                currentDbDoc = currentDbDoc[fieldIdSplit[i]];
-            }
-            currentDbDoc.splice(arrayIndex, 1);
-            Meteor.call(profileOptions.method, dbDoc, (error) => {
-                if (error) {
-                    toastr.error(`Beim Speichern des Benutzerprofils ist ein Fehler aufgetreten: ${error}`);
-                } else {
-                    toastr.success('Das Benutzerprofil wurde erfolgreich aktualisiert');
+        const data = templateInstance.data;
+        if (typeof data.editable === 'undefined' || data.editable) {
+            if (_.get(data, 'reference.reverse')) {
+                const deleteConf = _.get(data, 'reference.delete');
+                Meteor.call(deleteConf.method, this._id, (error) => {
+                    if (error) { deleteConf.onError.call(this, data, error); }
+                    else { deleteConf.onSuccess.call(this, data); }
+                });
+            } else {
+                const $base = $elem.closest('[data-array-index]');
+                const arrayIndex = $base.attr('data-array-index');
+                const fieldIdSplit = `${$base.closest('[data-field-id]').attr('data-field-id')}`.split('.');
+                const dbDoc = profileOptions.collection.findOne(getContext(templateInstance)._id);
+                let currentDbDoc = dbDoc;
+                for (let i = 0; i < fieldIdSplit.length; i++) {
+                    currentDbDoc = currentDbDoc[fieldIdSplit[i]];
                 }
-            });
+                currentDbDoc.splice(arrayIndex, 1);
+                Meteor.call(profileOptions.method, dbDoc, (error) => {
+                    if (error) {
+                        toastr.error(`Beim Speichern des Benutzerprofils ist ein Fehler aufgetreten: ${error}`);
+                    } else {
+                        toastr.success('Das Benutzerprofil wurde erfolgreich aktualisiert');
+                    }
+                });
+            }
         }
         event.preventDefault();
         event.stopPropagation();
@@ -414,13 +514,15 @@ Template.autoProfileField_string_reference.helpers({
     referenceLabel() {
         const ref = this.reference;
         const refId = getFieldValue(Template.instance(), this.id || this, this);
-        if (refId && ref && ref.collection) {
-            const relObj = ref.collection.findOne(refId);
-            if (relObj) {
-                return relObj[ref.labelField && (ref.labelField.id || ref.labelField)];
+        if (refId && ref && ref.collectionName) {
+            const collection = getCollectionByName(ref.collectionName);
+            if (collection) {
+                const relObj = collection.findOne(refId);
+                if (relObj) {
+                    return relObj[ref.labelField && (ref.labelField.id || ref.labelField)];
+                }
             }
         }
-
     },
 });
 
@@ -431,17 +533,25 @@ Template.autoProfileField_array_object.helpers({
     },
     titleFieldValue() {
         const parent = Template.instance().parent();
-        if (parent && parent.data && parent.data.data && parent.data.data.titleField) {
-            const titleField = parent.data.data.titleField;
-            return `<span data-field-id="${titleField.id || titleField}">${getFieldValue(parent, titleField.id || titleField, this)}</span>`;
+        const data = _.get(parent, 'data.data');
+        const titleField = _.get(parent, 'data.data.titleField');
+        if (titleField) {
+            const reference = data.reference;
+            const titleFieldValue = getFieldValue(parent, titleField.id || titleField, this);
+            if (reference && reference.reverse) {
+                return `<span class="autoprofile-title-field-label" data-field-id="${titleField.id || titleField}" data-collection-name="${reference.collectionName}" data-doc-id="${this._id}">${this[titleField.id]}</span>`;
+            }
+            return `<span  class="autoprofile-field-label" data-field-id="${titleField.id || titleField}">${titleFieldValue}</span>`;
         }
-        return "Error: titleField not set in array of objects context";
+        return 'Error: titleField not set in array of objects context';
     },
     contentFieldValue() {
         const templateInstance = Template.instance();
         const parent = templateInstance.parent();
-        if (parent && parent.data && parent.data.data && parent.data.data.subfields && parent.data.data.subfields.length > 0) {
-            const subfields = parent.data.data.subfields;
+        const data = _.get(parent, 'data.data');
+        const reference = data.reference;
+        const subfields = _.get(parent, 'data.data.subfields');
+        if (subfields && subfields.length > 0) {
             let value = null;
             for (let i = 0; i < subfields.length; i++) {
                 const subfield = subfields[i];
@@ -451,15 +561,19 @@ Template.autoProfileField_array_object.helpers({
                     const href = `/cdn/storage/${fieldValue._collectionName}/${fieldValue._id}/original/${fieldValue._id}.${fieldValue.extension}`;
                     return `<a href="${href}" target="_blank">${fieldValue.name}</a>`;
                 }
-                if (i === 0) {
-                    value = `<span data-field-id="${subfield.id}">${fieldValue}</span>`;
+                if (i === 0) { value = ''; }
+                else { value += ' '; }
+                if (reference && reference.reverse) {
+                    const subfieldValue = _.get(this, subfield.id) || '?';
+                    value += `<span data-field-id="${subfield.id || subfield}" data-collection-name="${reference.collectionName}" data-doc-id="${this._id}">${subfieldValue}</span>`;
                 } else {
-                    value += ` <span data-field-id="${subfield.id}">${fieldValue}</span>`;
+                    value += `<span data-field-id="${subfield.id}">${fieldValue}</span>`;
                 }
             }
             return value;
         }
-        return "Error: subfields not Set in array of objects context";
+        // return "Error: subfields not Set in array of objects context";
+        return '';
     },
 });
 
@@ -479,13 +593,10 @@ Template.autoProfileField_fileReference.helpers({
         const fieldSchema = SimpleSchemaFunctions.getFieldSchema(profileOptions.collection, this.id);
         const afFieldInput = _.get(fieldSchema, 'autoform.afFieldInput');
         if (afFieldInput) {
-            const collection = window[afFieldInput.collection];
+            const collection = getCollectionByName(afFieldInput.collection);
             if (collection) {
-                const referencedObject = collection.findOne(fieldValue);
-                console.error('autoProfileField_fileReference referencedObject', this, instance, fieldSchema, afFieldInput.collection, fieldValue, referencedObject);
-                return referencedObject;
+                return collection.findOne(fieldValue);
             }
         }
-
     }
 });
