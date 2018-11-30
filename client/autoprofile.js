@@ -21,7 +21,7 @@ function dbg(...params) {
 
 function getData (templateInstance) {
     if (!templateInstance) { return undefined; }
-    if (templateInstance.view.name === 'Template.autoProfile') { return templateInstance.data;}
+    if (templateInstance.view.name === 'Template.autoProfile') { return templateInstance.data; }
     const autoProfileTemplate = templateInstance.parent((instance) => { return instance.view.name === 'Template.autoProfile'; });
     if (autoProfileTemplate) {
         return autoProfileTemplate.data;
@@ -89,6 +89,19 @@ function getFieldValue (templateInstance, id, context, options) {
                         }
                         return false;
                     }
+                } else if (fieldSchema.type.singleType === Array) {
+                    const collection = window[afFieldInput.collection];
+                    if (collection && value) {
+                        if (context.type === 'autoProfileField_image') {
+                            const file = collection.find({_id: value[0]}).fetch();
+                            if (file && file.length > 0) {
+                                return file[0];
+                            }
+                        } else {
+                            return value;
+                        }
+                        return false;
+                    }
                 }
             } else {
                 dbg('getFieldValue: fieldSchema not found', name, id);
@@ -107,7 +120,7 @@ function getTemplate (templateInstance, context) {
     if (context.template) { return context.template; }
     const foreignCollection = window[_.get(context, 'reference.collectionName')];
     const fullNameSplit = fullName ? fullName.split('.') : [];
-    let fieldSchema =
+    const fieldSchema =
         SimpleSchemaFunctions.getFieldSchema(foreignCollection || profileOptions.collection, fullName) ||
         SimpleSchemaFunctions.getFieldSchema(foreignCollection || profileOptions.collection, context.id);
     if (fieldSchema) {
@@ -202,7 +215,7 @@ Template.autoProfile.helpers({
     },
     getMethod() {
         const reactiveMethod = Template.instance().currentMethod.get();
-        return reactiveMethod ? reactiveMethod : Template.instance().data.options.method;
+        return reactiveMethod || Template.instance().data.options.method;
     },
     getMethodArgs() {
         return Template.instance().data.options.methodargs;
@@ -210,12 +223,12 @@ Template.autoProfile.helpers({
     getDocId() {
         const context = getContext(Template.instance());
         const docId = Template.instance().currentDocumentId.get();
-        const result = docId ? docId : context ? context._id : null;
+        const result = docId || (context ? context._id : null);
         return result;
     },
     getCollectionName() {
         const collectionName = Template.instance().currentCollectionName.get();
-        return collectionName ? collectionName : Template.instance().data.options.collectionName;
+        return collectionName || Template.instance().data.options.collectionName;
     },
     getInstance() {
         return Template.instance();
@@ -350,7 +363,7 @@ Template.autoProfileField_string.events({
             const collectionName = $subElem.attr('data-collection-name');
             const docId = $subElem.attr('data-doc-id');
             const fieldId = $subElem.attr('data-field-id');
-            let currentFieldId = fieldId ? fieldId : $elem.attr('data-field-id');
+            let currentFieldId = fieldId || $elem.attr('data-field-id');
             if (typeof arrayIndex !== 'undefined' && !_.get(templateInstance, 'data.reference')) {
                 currentFieldId = `${$elem.closest('[data-field-id]').attr('data-field-id')}.${arrayIndex}`;
             }
@@ -429,8 +442,7 @@ Template.autoProfileField_string.events({
             if (_.get(data, 'reference.reverse')) {
                 const deleteConf = _.get(data, 'reference.delete');
                 Meteor.call(deleteConf.method, this._id, (error) => {
-                    if (error) { deleteConf.onError.call(this, data, error); }
-                    else { deleteConf.onSuccess.call(this, data); }
+                    if (error) { deleteConf.onError.call(this, data, error); } else { deleteConf.onSuccess.call(this, data); }
                 });
             } else {
                 const $base = $elem.closest('[data-array-index]');
@@ -472,6 +484,8 @@ Template.autoProfilePanel.inheritsHelpersFrom('autoProfileField_string');
 Template.autoProfileField_image.inheritsHelpersFrom('autoProfileField_string');
 Template.autoProfileField_file.inheritsHelpersFrom('autoProfileField_string');
 Template.autoProfileField_fileCheck.inheritsHelpersFrom('autoProfileField_string');
+Template.autoProfileField_fileCheckArray.inheritsHelpersFrom('autoProfileField_fileCheck');
+Template.autoProfileField_fileCheckArray.inheritsHelpersFrom('autoProfileField_string');
 Template.autoProfileField_date.inheritsHelpersFrom('autoProfileField_string');
 Template.autoProfileField_string_textarea.inheritsHelpersFrom('autoProfileField_string');
 Template.autoProfileField_array.inheritsHelpersFrom('autoProfileField_string');
@@ -486,6 +500,7 @@ Template.autoProfileField_fileReference.inheritsHelpersFrom('autoProfileField_st
 Template.autoProfileField_image.inheritsEventsFrom('autoProfileField_string');
 Template.autoProfileField_file.inheritsEventsFrom('autoProfileField_string');
 Template.autoProfileField_fileCheck.inheritsEventsFrom('autoProfileField_string');
+Template.autoProfileField_fileCheckArray.inheritsEventsFrom('autoProfileField_fileCheck');
 Template.autoProfileField_date.inheritsEventsFrom('autoProfileField_string');
 Template.autoProfileField_string_textarea.inheritsEventsFrom('autoProfileField_string');
 Template.autoProfileField_array.inheritsEventsFrom('autoProfileField_string');
@@ -502,6 +517,30 @@ Template.autoProfileField_fileCheck.helpers({
             return this.link.call(this, fieldValue, fieldSchema);
         }
         return null;
+    }
+});
+
+Template.autoProfileField_fileCheckArray.helpers({
+    getLinkArray(value) {
+        if (typeof this.link === 'function') {
+            const instance = Template.instance();
+            const fieldSchema = SimpleSchemaFunctions.getFieldSchema(getOptions(instance).collection, value);
+            return this.link.call(this, value, fieldSchema);
+        }
+        return null;
+    },
+
+    getFilename(value) {
+        if (value) {
+            const collection = window.Files;
+            if (collection) {
+                try {
+                    return collection.findOne({_id: value}).name;
+                } catch (error) {
+                    // error
+                }
+            }
+        }
     }
 });
 
@@ -539,7 +578,8 @@ Template.autoProfileField_array_object.helpers({
             const reference = data.reference;
             const titleFieldValue = getFieldValue(parent, titleField.id || titleField, this);
             if (reference && reference.reverse) {
-                return `<span class="autoprofile-title-field-label" data-field-id="${titleField.id || titleField}" data-collection-name="${reference.collectionName}" data-doc-id="${this._id}">${this[titleField.id]}</span>`;
+                return `<span class="autoprofile-title-field-label" data-field-id="${titleField.id
+                    || titleField}" data-collection-name="${reference.collectionName}" data-doc-id="${this._id}">${this[titleField.id]}</span>`;
             }
             return `<span  class="autoprofile-field-label" data-field-id="${titleField.id || titleField}">${titleFieldValue}</span>`;
         }
@@ -561,11 +601,11 @@ Template.autoProfileField_array_object.helpers({
                     const href = `/cdn/storage/${fieldValue._collectionName}/${fieldValue._id}/original/${fieldValue._id}.${fieldValue.extension}`;
                     return `<a href="${href}" target="_blank">${fieldValue.name}</a>`;
                 }
-                if (i === 0) { value = ''; }
-                else { value += ' '; }
+                if (i === 0) { value = ''; } else { value += ' '; }
                 if (reference && reference.reverse) {
                     const subfieldValue = _.get(this, subfield.id) || '?';
-                    value += `<span data-field-id="${subfield.id || subfield}" data-collection-name="${reference.collectionName}" data-doc-id="${this._id}">${subfieldValue}</span>`;
+                    value += `<span data-field-id="${subfield.id
+                        || subfield}" data-collection-name="${reference.collectionName}" data-doc-id="${this._id}">${subfieldValue}</span>`;
                 } else {
                     value += `<span data-field-id="${subfield.id}">${fieldValue}</span>`;
                 }
