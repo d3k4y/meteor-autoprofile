@@ -1,5 +1,4 @@
 import {Blaze} from "meteor/blaze";
-// eslint-disable-next-line import/no-unresolved
 import {AutoForm} from 'meteor/aldeed:autoform';
 import {_} from "meteor/erasaur:meteor-lodash";
 import toastr from 'toastr';
@@ -162,6 +161,7 @@ AutoForm.addHooks(['AutoProfileCreateReferenceDocAndAddArrayItemForm'], {
         const callback = window.autoprofileState_ErrorCallback.get();
         if (callback) {
             callback.call(this, fieldDefinition, error);
+            console.error('AutoProfileCreateReferenceDocAndAddArrayItemForm onError', this, formType, error);
         }
     }
 });
