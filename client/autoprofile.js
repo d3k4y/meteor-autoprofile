@@ -89,6 +89,19 @@ function getFieldValue (templateInstance, id, context, options) {
                         }
                         return false;
                     }
+                } else if (fieldSchema.type.singleType === Array) {
+                    const collection = window[afFieldInput.collection];
+                    if (collection && value) {
+                        if (context.type === 'autoProfileField_image') {
+                            const file = collection.find({_id: value[0]}).fetch();
+                            if (file && file.length > 0) {
+                                return file[0];
+                            }
+                        } else {
+                            return value;
+                        }
+                        return false;
+                    }
                 }
             } else {
                 dbg('getFieldValue: fieldSchema not found', name, id);
@@ -209,8 +222,7 @@ Template.autoProfile.helpers({
     getDocId() {
         const context = getContext(Template.instance());
         const docId = Template.instance().currentDocumentId.get();
-        const result = docId || context ? context._id : null;
-        return result;
+        return  Template.instance().currentDocumentId.get() || context ? context._id : null;
     },
     getCollectionName() {
         return Template.instance().currentCollectionName.get() || Template.instance().data.options.collectionName;
@@ -470,6 +482,8 @@ Template.autoProfilePanel.inheritsHelpersFrom('autoProfileField_string');
 Template.autoProfileField_image.inheritsHelpersFrom('autoProfileField_string');
 Template.autoProfileField_file.inheritsHelpersFrom('autoProfileField_string');
 Template.autoProfileField_fileCheck.inheritsHelpersFrom('autoProfileField_string');
+Template.autoProfileField_fileCheckArray.inheritsHelpersFrom('autoProfileField_fileCheck');
+Template.autoProfileField_fileCheckArray.inheritsHelpersFrom('autoProfileField_string');
 Template.autoProfileField_date.inheritsHelpersFrom('autoProfileField_string');
 Template.autoProfileField_string_textarea.inheritsHelpersFrom('autoProfileField_string');
 Template.autoProfileField_array.inheritsHelpersFrom('autoProfileField_string');
@@ -484,6 +498,7 @@ Template.autoProfileField_fileReference.inheritsHelpersFrom('autoProfileField_st
 Template.autoProfileField_image.inheritsEventsFrom('autoProfileField_string');
 Template.autoProfileField_file.inheritsEventsFrom('autoProfileField_string');
 Template.autoProfileField_fileCheck.inheritsEventsFrom('autoProfileField_string');
+Template.autoProfileField_fileCheckArray.inheritsEventsFrom('autoProfileField_fileCheck');
 Template.autoProfileField_date.inheritsEventsFrom('autoProfileField_string');
 Template.autoProfileField_string_textarea.inheritsEventsFrom('autoProfileField_string');
 Template.autoProfileField_array.inheritsEventsFrom('autoProfileField_string');
@@ -500,6 +515,30 @@ Template.autoProfileField_fileCheck.helpers({
             return this.link.call(this, fieldValue, fieldSchema);
         }
         return null;
+    }
+});
+
+Template.autoProfileField_fileCheckArray.helpers({
+    getLinkArray(value) {
+        if (typeof this.link === 'function') {
+            const instance = Template.instance();
+            const fieldSchema = SimpleSchemaFunctions.getFieldSchema(getOptions(instance).collection, value);
+            return this.link.call(this, value, fieldSchema);
+        }
+        return null;
+    },
+
+    getFilename(value) {
+        if (value) {
+            const collection = window.Files;
+            if (collection) {
+                try {
+                    return collection.findOne({_id: value}).name;
+                } catch (error) {
+                    // error
+                }
+            }
+        }
     }
 });
 

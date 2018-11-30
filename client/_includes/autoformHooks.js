@@ -28,7 +28,7 @@ AutoForm.addHooks(['AutoProfileEditForm_UpdateSet', 'AutoProfileEditForm_UpdateS
             }
 
             const updateDoc = {};
-            _.keys(doc).forEach(key => {
+            _.keys(doc).forEach((key) => {
                 if (doc[key] !== dbDoc[key]) {
                     updateDoc[key] = doc[key];
                 }
@@ -44,7 +44,7 @@ AutoForm.addHooks(['AutoProfileEditForm_UpdateSet', 'AutoProfileEditForm_UpdateS
         },
     },
     onSuccess(formType, result) {
-        console.error('onSuccess', this);
+        // console.error('onSuccess', this);
         // const autoProfileTemplate = this.template.view.template.parent((instance) => { return instance.view.name === 'Template.autoProfile'; });
         toastr.success('Das Benutzerprofil wurde erfolgreich aktualisiert');
     },
@@ -66,7 +66,7 @@ AutoForm.addHooks(['AutoProfileEditForm_UpdateSetQuick'], {
 AutoForm.addHooks(['AutoProfileEditForm_UpdateDoc'], {
     before: {
         enhancedmethod: function (doc) {
-            console.error('AutoProfileEditForm_UpdateDoc this', this);
+            // console.error('AutoProfileEditForm_UpdateDoc this', this);
             const dbDoc = this.collection.findOne(this.currentDoc._id);
             const fieldId = window.autoprofileState_FieldId.get();
             const fieldIdSplit = fieldId.split('.');
@@ -141,7 +141,8 @@ AutoForm.addHooks(['AutoProfileCreateReferenceDocAndAddArrayItemForm'], {
         method: function (doc) {
             const callContext = _.get(this, 'formAttributes.callContext');
             doc[callContext.fieldName] = callContext.fieldValue;
-            const insertConf = _.get(callContext, 'fieldDefinition.reference.insert');
+            // TODO whats wit dat?
+            // const insertConf = _.get(callContext, 'fieldDefinition.reference.insert');
             const callback = window.autoprofileState_ModifyCallback.get();
             if (callback) {
                 doc = callback.call(this, doc, callContext.fieldDefinition);

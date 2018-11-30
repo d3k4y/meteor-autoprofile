@@ -324,6 +324,18 @@
   {{/if}}
 </template>
 
+<template name="autoProfileField_fileCheckArray">
+  {{#if fieldValue}}
+    {{#each value in fieldValue}}
+      <span class="float-right icon-check cf-icon cf-icon-big"> </span>
+      <a href="{{getLinkArray value}}">{{getFilename value}}</a>
+      <br>
+    {{/each}}
+  {{else}}
+    <span class="float-right icon-cross cf-icon cf-icon-big"> </span> {{fieldTitle}}
+  {{/if}}
+</template>
+
 <template name="autoProfileField_date">
   <span id="autoprofile-field-{{fieldId}}" class="autoprofile-field" data-field-id="{{fieldId}}">{{fieldValue}}</span>
 </template>
