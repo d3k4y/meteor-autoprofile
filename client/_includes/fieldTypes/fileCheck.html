@@ -1,0 +1,8 @@
+<template name="autoProfileField_fileCheck">
+  {{#if fieldValue}}
+    <span class="float-right icon-check cf-icon cf-icon-big"> </span>
+    <a href="{{getLink}}">{{fieldTitle}}</a>
+  {{else}}
+    <span class="float-right icon-cross cf-icon cf-icon-big"> </span> {{fieldTitle}}
+  {{/if}}
+</template>

@@ -1,0 +1,8 @@
+<template name="autoProfileField_file">
+  <span class="pull-left"><strong>{{fieldTitle}}</strong></span>
+  {{#if fieldValue}}
+    <a href="/cdn/storage/{{fieldValue._collectionName}}/{{fieldValue._id}}/original/{{fieldValue._id}}.{{fieldValue.extension}}" target="_blank">{{fieldValue.name}}</a>
+  {{else}}
+    ?
+  {{/if}}
+</template>

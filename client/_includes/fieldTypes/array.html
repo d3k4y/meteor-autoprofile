@@ -1,0 +1,10 @@
+<!-- TODO: make it possible to somehow switch view here -->
+<template name="autoProfileField_array">
+  <ul class="list-group" data-field-id="{{fieldId}}" data-field-type="autoProfileField_array">
+    {{#each fieldValue}}
+      <li class="list-group-item text-muted" data-array-index="{{@index}}">
+        {{this}}
+      </li>
+    {{/each}}
+  </ul>
+</template>

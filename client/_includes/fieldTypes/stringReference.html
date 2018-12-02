@@ -1,0 +1,18 @@
+<template name="autoProfileField_string_reference">
+  {{#if contentOnly}}
+    {{#if referenceLabel}}
+      <a href="{{referenceUrl}}">{{referenceLabel}}</a>
+    {{else}}
+      ?
+    {{/if}}
+  {{else}}
+    <li class="list-group-item text-right">
+      <span class="pull-left"><strong>{{fieldTitle}}</strong></span>
+      {{#if referenceLabel}}
+        <a href="{{referenceUrl}}">{{referenceLabel}}</a>
+      {{else}}
+        ?
+      {{/if}}
+    </li>
+  {{/if}}
+</template>
