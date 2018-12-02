@@ -1,0 +1,25 @@
+<template name="autoProfileFieldHelper_editable">
+  {{#if $and editingEnabled useEditableText}}
+    {{> editableText
+            context=context collection="freelancers" field=field
+            wysiwyg=wysiwyg acceptEmpty=acceptEmpty substitute=substitute class=class inputClass=inputClass}}
+  {{else}}
+    <span id="autoprofile-field-{{field}}" data-field-id="{{field}}" class="autoprofile-field js-autoprofile-field {{#if isEditable}}editable{{/if}}">
+      {{#if fieldValue}}
+        {{#if isMarkdown}}
+          {{#markdown}}{{fieldValue}}{{/markdown}}
+        {{else if isHTML}}
+          {{{fieldValue}}}
+        {{else if urlFieldValue}}
+          <a href="{{urlFieldValue}}" target="_blank">{{fieldValue}}</a>
+        {{else if isUrl}}
+          <a href="{{fieldValue}}" target="_blank">{{fieldValue}}</a>
+        {{else}}
+          {{fieldValue}}
+        {{/if}}
+      {{else}}
+        ?
+      {{/if}}
+    </span>
+  {{/if}}
+</template>

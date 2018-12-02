@@ -1,0 +1,126 @@
+<!-- Profile Panel -->
+<template name="autoProfilePanel">
+  {{#if contentOnly}}
+    {{#with field}}
+      {{> DynamicTemplate template=getTemplate data=this}}
+    {{/with}}
+    {{#each fields}}
+      {{> DynamicTemplate template=getTemplate data=this}}
+    {{/each}}
+  {{else}}
+
+    <div class="{{cardOrPanel}} {{cardOrPanel}}-default {{#if listContent}}list-{{cardOrPanel}}{{/if}} {{#if highlighted}}highlighted{{/if}}">
+
+      <div class="{{cardOrPanel}}-{{headerOrHeading}}  cf-card__card-header">
+        {{#with titleField}}
+          {{#if group}}
+            {{#each group}}
+              {{> DynamicTemplate template=getTemplate data=this}}
+            {{/each}}
+          {{else}}
+            {{> DynamicTemplate template=getTemplate data=this}}
+          {{/if}}
+        {{else}}
+          {{panelTitle}}
+          {{#if icon}}
+            <i class="fa fa-{{icon}} fa-1x"></i>
+          {{/if}}
+        {{/with}}
+      </div>
+
+      {{#if valueOnly}}
+        {{#if noBody}}
+          {{#with field}}
+            {{> DynamicTemplate template=getTemplate data=this}}
+          {{/with}}
+          {{#each fields}}
+            {{> DynamicTemplate template=getTemplate data=this}}
+          {{/each}}
+        {{else}}
+          <div class="card-body">
+            {{#with field}}
+              {{> DynamicTemplate template=getTemplate data=this}}
+            {{/with}}
+            {{#each fields}}
+              {{> DynamicTemplate template=getTemplate data=this}}
+            {{/each}}
+          </div>
+        {{/if}}
+      {{else if $eq view "table"}}
+        <table class="table">
+          {{#with field}}
+            <tr><td>{{fieldTitle}}</td><td>{{> DynamicTemplate template=getTemplate data=this}}</td></tr>
+          {{/with}}
+          {{#each fields}}
+            <tr><td>{{fieldTitle}}</td><td>{{> DynamicTemplate template=getTemplate data=this}}</td></tr>
+          {{/each}}
+        </table>
+      {{else if $eq view "carddeck"}}
+        <div class="card-body">
+
+          {{#each decks}}
+            <div class="card-deck">
+              {{#each fields}}
+                <div class="card">
+                  <div class="card-body">
+                    {{> DynamicTemplate template=getTemplate data=this}}
+                  </div>
+                </div>
+              {{/each}}
+            </div>
+          {{/each}}
+
+          {{!--
+          <div class="card-deck">
+            <div class="card">
+              <div class="card-body">
+
+                <span class="float-right icon-check cf-icon cf-icon-big"> </span>
+                <a href="/dealcockpit/eAWoBvrJNrAjxJfiW?initialItem=7LGdLzvoN8BRaddqs">Objektbilder</a>
+
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-body">
+
+                <span class="float-right icon-cross cf-icon cf-icon-big"> </span> Flurkarte / Lageplan
+
+              </div>
+            </div>
+          </div>
+          --}}
+
+        </div>
+      {{else}}
+        <ul class="list-group">
+
+          {{#with field}}
+            {{#if group}}
+              <li class="list-group-item text-right"><span class="pull-left"><strong>{{fieldTitle}}</strong></span>
+                {{#each group}}
+                  {{> DynamicTemplate template=getTemplate data=this}}
+                {{/each}}
+              </li>
+            {{else}}
+              <li class="list-group-item text-right"><span class="pull-left"><strong>{{fieldTitle}}</strong></span>{{> DynamicTemplate template=getTemplate data=this}}</li>
+            {{/if}}
+          {{/with}}
+
+          {{#each fields}}
+            {{#if group}}
+              <li class="list-group-item text-right"><span class="pull-left"><strong>{{fieldTitle}}</strong></span>
+                {{#each group}}
+                  {{> DynamicTemplate template=getTemplate data=this}}
+                {{/each}}
+              </li>
+            {{else}}
+              <li class="list-group-item text-right"><span class="pull-left"><strong>{{fieldTitle}}</strong></span>{{> DynamicTemplate template=getTemplate data=this}}</li>
+            {{/if}}
+          {{/each}}
+
+        </ul>
+      {{/if}}
+
+    </div>
+  {{/if}}
+</template>

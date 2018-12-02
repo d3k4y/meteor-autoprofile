@@ -1,14 +1,15 @@
-/* eslint-disable consistent-return,meteor/template-names */
 import {Template} from 'meteor/templating';
 import {ReactiveVar} from 'meteor/reactive-var';
-import {_} from "meteor/erasaur:meteor-lodash";
-
-import {SimpleSchemaFunctions} from "meteor/corefi:meteor-simple-schema-functions";
 
 import './_includes/autoformHooks';
-import {getOptions, getContext, getTemplate} from './_includes/_api';
+import {getContext} from './_includes/_api';
 
 import './autoprofile.html';
+import './_includes/panel.html';
+import './_includes/panel.js';
+import './_includes/helperEditable.html';
+import './_includes/helperEditable.js';
+
 import './_includes/fieldTypes/stringReference.html';
 import './_includes/fieldTypes/stringReference.js';
 import './_includes/fieldTypes/fileReference.html';
@@ -86,38 +87,6 @@ Template.autoProfile.helpers({
     getEditFormId() {
         const options = Template.instance().data.options;
         return options.updateType === 'updateSet' ? 'AutoProfileEditForm_UpdateSet' : 'AutoProfileEditForm_UpdateDoc';
-    }
-});
-
-/* AutoProfile Panel */
-Template.autoProfilePanel.helpers({
-    cardOrPanel() {
-        return 'card' || 'panel';
-    },
-    headerOrHeading() {
-        return 'header' || 'heading';
-    },
-    panelTitle() {
-        const profileOptions = getOptions(Template.instance());
-        if (this.title) {
-            return this.title;
-        }
-        if (this.field) {
-            return _.get(SimpleSchemaFunctions.getFieldSchema(profileOptions.collection, this.field.id), 'label');
-        }
-    },
-    getTemplate() {
-        return getTemplate(Template.instance(), this);
-    },
-});
-
-
-/* AutoProfile Fields */
-Template.autoProfileFieldHelper_editable.helpers({
-    isEditable() {
-        if (this.fieldOptions && this.fieldOptions.value) { return false; }
-        const fieldOptions = Template.instance().data.fieldOptions;
-        return fieldOptions && (typeof fieldOptions.editable === 'undefined' || fieldOptions.editable);
     }
 });
 
