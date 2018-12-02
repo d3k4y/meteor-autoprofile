@@ -10,6 +10,10 @@ export function dbg(...params) {
     // console.error.apply(this, params);
 }
 
+export function getCollectionByName(collectionName) {
+    return typeof window !== 'undefined' ? window[collectionName] : global[collectionName];
+}
+
 export function getData (templateInstance) {
     if (!templateInstance) { return undefined; }
     if (templateInstance.view.name === 'Template.autoProfile') { return templateInstance.data; }
@@ -160,8 +164,4 @@ export function getTemplate (templateInstance, context) {
         dbg('getTemplate: fieldSchema not found!', fullName, context.id);
     }
     return "autoProfileField_string";
-}
-
-export function getCollectionByName(collectionName) {
-    return typeof window !== 'undefined' ? window[collectionName] : global[collectionName];
 }

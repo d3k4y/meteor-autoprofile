@@ -2,7 +2,7 @@
   {{#if renderInplace}}
     <ul class="list-group" data-field-id="{{fieldId}}" data-field-type="autoProfileField_array_object">
       {{#each fieldValue}}
-        <li class="list-group-item text-right autoprofile-field {{#if isEditable}}editable{{/if}}" data-array-index="{{@index}}" data-parent-field-id="{{..fieldId}}">
+        <li class="list-group-item text-right autoprofile-field js-autoprofile-field {{#if isEditable}}editable{{/if}}" data-array-index="{{@index}}" data-parent-field-id="{{..fieldId}}">
           <span class="pull-left"><strong>{{{titleFieldValue}}}</strong></span>
           {{#if isFileField}}
             {{>autoProfileField_file}}
@@ -22,7 +22,7 @@
     <!--SUBLIST: TODO-->
     <ul class="list-group" data-field-id="{{fieldId}}" data-field-type="autoProfileField_array_object">
       {{#each fieldValue}}
-        <li class="list-group-item text-right autoprofile-field {{#if isEditable}}editable{{/if}}" data-array-index="{{@index}}" data-parent-field-id="{{..fieldId}}">
+        <li class="list-group-item text-right autoprofile-field js-autoprofile-field {{#if isEditable}}editable{{/if}}" data-array-index="{{@index}}" data-parent-field-id="{{..fieldId}}">
           <strong class="pull-left">{{{titleFieldValue}}}</strong>
           {{#if isFileField}}
             {{>autoProfileField_file}}

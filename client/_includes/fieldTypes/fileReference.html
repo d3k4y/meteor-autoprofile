@@ -1,10 +1,10 @@
 <template name="autoProfileField_fileReference">
   autoProfileField_fileReference: {{fieldValue}} {{referencedObject}}
   {{#if fieldValue}}
-    <img id="autoprofile-field-{{fieldId}}" data-field-id="{{fieldId}}" class="autoprofile-field {{#if isEditable}}editable{{/if}}" src="/cdn/storage/{{fieldValue._collectionName}}/{{fieldValue._id}}/original/{{fieldValue._id}}.{{fieldValue.extension}}" width="320" />
+    <img id="autoprofile-field-{{fieldId}}" data-field-id="{{fieldId}}" class="autoprofile-field js-autoprofile-field {{#if isEditable}}editable{{/if}}" src="/cdn/storage/{{fieldValue._collectionName}}/{{fieldValue._id}}/original/{{fieldValue._id}}.{{fieldValue.extension}}" width="320" />
   {{else}}
     {{#if placeholder}}
-      <img id="autoprofile-field-{{fieldId}}" data-field-id="{{fieldId}}" class="autoprofile-field {{#if isEditable}}editable{{/if}}" src="{{placeholder}}" width="320" /> <!--nobody.jpg-->
+      <img id="autoprofile-field-{{fieldId}}" data-field-id="{{fieldId}}" class="autoprofile-field js-autoprofile-field {{#if isEditable}}editable{{/if}}" src="{{placeholder}}" width="320" /> <!--nobody.jpg-->
     {{/if}}
   {{/if}}
 </template>
