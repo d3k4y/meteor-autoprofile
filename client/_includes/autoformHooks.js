@@ -1,8 +1,32 @@
 import {Blaze} from "meteor/blaze";
 import {AutoForm} from 'meteor/aldeed:autoform';
 import {_} from "meteor/erasaur:meteor-lodash";
-import toastr from 'toastr';
 
+
+function executeCallback(type, context, args, rtrn = null) {
+    const types = {
+        modify: 'autoprofileState_ModifyCallback',
+        success: 'autoprofileState_SuccessCallback',
+        error: 'autoprofileState_ErrorCallback',
+    };
+    const typeKey = types[type];
+    if (typeKey) {
+        const callback = window[typeKey].get();
+        if (typeof callback === 'function') {
+            return callback.apply(context, args);
+        }
+    }
+    return rtrn;
+}
+function executeModifyCallback(context, args, doc) {
+    return executeCallback('modify', context, args, doc);
+}
+function executeSuccessCallback(context, args) {
+    return executeCallback('success', context, args);
+}
+function executeErrorCallback(context, args) {
+    return executeCallback('success', context, args);
+}
 
 /**
  * DOCUMENTATION:
@@ -44,11 +68,12 @@ AutoForm.addHooks(['AutoProfileEditForm_UpdateSet', 'AutoProfileEditForm_UpdateS
         },
     },
     onSuccess(formType, result) {
-        // console.error('onSuccess', this);
-        // const autoProfileTemplate = this.template.view.template.parent((instance) => { return instance.view.name === 'Template.autoProfile'; });
-        toastr.success('Das Benutzerprofil wurde erfolgreich aktualisiert');
+        executeSuccessCallback(this, [_.get(this, 'formAttributes.callContext.fieldDefinition'), result, formType]);
     },
-    onError(formType, error) { toastr.error(`Beim Erstellen des Benutzerprofils ist ein Fehler aufgetreten: ${error}`); }
+    onError(formType, error) {
+        executeErrorCallback(this, [_.get(this, 'formAttributes.callContext.fieldDefinition'), error, formType]);
+        console.error('AutoProfileAddArrayItemForm onError', this, formType, error);
+    }
 });
 
 AutoForm.addHooks(['AutoProfileEditForm_UpdateSetQuick'], {
@@ -66,7 +91,6 @@ AutoForm.addHooks(['AutoProfileEditForm_UpdateSetQuick'], {
 AutoForm.addHooks(['AutoProfileEditForm_UpdateDoc'], {
     before: {
         enhancedmethod: function (doc) {
-            // console.error('AutoProfileEditForm_UpdateDoc this', this);
             const dbDoc = this.collection.findOne(this.currentDoc._id);
             const fieldId = window.autoprofileState_FieldId.get();
             const fieldIdSplit = fieldId.split('.');
@@ -94,8 +118,13 @@ AutoForm.addHooks(['AutoProfileEditForm_UpdateDoc'], {
             */
         },
     },
-    onSuccess(formType, result) { toastr.success('Das Benutzerprofil wurde erfolgreich aktualisiert'); },
-    onError(formType, error) { toastr.error(`Beim Erstellen des Benutzerprofils ist ein Fehler aufgetreten: ${error}`); }
+    onSuccess(formType, result) {
+        executeSuccessCallback(this, [_.get(this, 'formAttributes.callContext.fieldDefinition'), result, formType]);
+    },
+    onError(formType, error) {
+        executeErrorCallback(this, [_.get(this, 'formAttributes.callContext.fieldDefinition'), error, formType]);
+        console.error('AutoProfileAddArrayItemForm onError', this, formType, error);
+    }
 });
 
 
@@ -131,8 +160,13 @@ AutoForm.addHooks(['AutoProfileAddArrayItemForm'], {
             */
         },
     },
-    onSuccess(formType, result) { toastr.success('Das Benutzerprofil wurde erfolgreich aktualisiert'); },
-    onError(formType, error) { toastr.error(`Beim Speichern des Benutzerprofils ist ein Fehler aufgetreten: ${error}`); }
+    onSuccess(formType, result) {
+        executeSuccessCallback(this, [_.get(this, 'formAttributes.callContext.fieldDefinition'), result, formType]);
+    },
+    onError(formType, error) {
+        executeErrorCallback(this, [_.get(this, 'formAttributes.callContext.fieldDefinition'), error, formType]);
+        console.error('AutoProfileAddArrayItemForm onError', this, formType, error);
+    }
 });
 
 
@@ -141,28 +175,14 @@ AutoForm.addHooks(['AutoProfileCreateReferenceDocAndAddArrayItemForm'], {
         method: function (doc) {
             const callContext = _.get(this, 'formAttributes.callContext');
             doc[callContext.fieldName] = callContext.fieldValue;
-            // TODO whats wit dat?
-            // const insertConf = _.get(callContext, 'fieldDefinition.reference.insert');
-            const callback = window.autoprofileState_ModifyCallback.get();
-            if (callback) {
-                doc = callback.call(this, doc, callContext.fieldDefinition);
-            }
-            this.result(doc);
+            this.result(executeModifyCallback(this, [doc, callContext.fieldDefinition, callContext], doc));
         },
     },
     onSuccess(formType, result) {
-        const fieldDefinition = _.get(this, 'formAttributes.callContext.fieldDefinition');
-        const callback = window.autoprofileState_SuccessCallback.get();
-        if (callback) {
-            callback.call(this, fieldDefinition);
-        }
+        executeSuccessCallback(this, [_.get(this, 'formAttributes.callContext.fieldDefinition'), result, formType]);
     },
     onError(formType, error) {
-        const fieldDefinition = _.get(this, 'formAttributes.callContext.fieldDefinition');
-        const callback = window.autoprofileState_ErrorCallback.get();
-        if (callback) {
-            callback.call(this, fieldDefinition, error);
-            console.error('AutoProfileCreateReferenceDocAndAddArrayItemForm onError', this, formType, error);
-        }
+        executeErrorCallback(this, [_.get(this, 'formAttributes.callContext.fieldDefinition'), error, formType]);
+        console.error('AutoProfileCreateReferenceDocAndAddArrayItemForm onError', this, formType, error);
     }
 });

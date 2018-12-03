@@ -120,6 +120,10 @@ Template.autoProfileField_string.events({
             autoProfileTemplate.currentCallContext.set(this);
             autoProfileTemplate.currentCollectionName.set(collectionName);
             autoProfileTemplate.currentDocumentId.set(docId);
+            autoProfileTemplate.currentModifyCallback.set(autoProfileOptions.onBefore);
+            autoProfileTemplate.currentSuccessCallback.set(autoProfileOptions.onSuccess);
+            autoProfileTemplate.currentErrorCallback.set(autoProfileOptions.onError);
+
             if (this.inplaceEditing || (this.fieldOptions && this.fieldOptions.inplaceEditing)) {
                 $elem.addClass('d-none');
                 const additionalButtonClasses = this.fieldOptions && this.fieldOptions.showButton ? '' : 'd-none';
@@ -172,7 +176,11 @@ Template.autoProfileField_string.events({
                 autoProfileTemplate.currentErrorCallback.set(_.get(this, 'reference.insert.onError'));
                 Meteor.defer(() => { $root.find('.js-create-reference-doc-and-add-array-item-afmodalbutton')[0].click(); });
             } else {
+                const options = getOptions(autoProfileTemplate);
                 autoProfileTemplate.currentCallContext.set(this);
+                autoProfileTemplate.currentModifyCallback.set(options.onBefore);
+                autoProfileTemplate.currentSuccessCallback.set(options.onSuccess);
+                autoProfileTemplate.currentErrorCallback.set(options.onError);
                 Meteor.defer(() => { $root.find('.js-add-array-item-afmodalbutton')[0].click(); });
             }
         }
@@ -182,12 +190,16 @@ Template.autoProfileField_string.events({
     },
 
     'click .js-autoprofile-remove-array-item'(event, templateInstance, doc) {
+        const autoProfileTemplate = templateInstance.parent((instance) => { return instance.view.name === 'Template.autoProfile'; });
         const profileOptions = getOptions(templateInstance);
         const $elem = $(event.currentTarget);
         const data = templateInstance.data;
         if (typeof data.editable === 'undefined' || data.editable) {
             if (_.get(data, 'reference.reverse')) {
                 const deleteConf = _.get(data, 'reference.delete');
+                autoProfileTemplate.currentModifyCallback.set(null);
+                autoProfileTemplate.currentSuccessCallback.set(null);
+                autoProfileTemplate.currentErrorCallback.set(null);
                 Meteor.call(deleteConf.method, this._id, (error) => {
                     if (error) deleteConf.onError.call(this, data, error);
                     else deleteConf.onSuccess.call(this, data);
@@ -202,6 +214,11 @@ Template.autoProfileField_string.events({
                     currentDbDoc = currentDbDoc[fieldIdSplit[i]];
                 }
                 currentDbDoc.splice(arrayIndex, 1);
+
+                autoProfileTemplate.currentModifyCallback.set(_.get(this, 'reference.insert.onBefore'));
+                autoProfileTemplate.currentSuccessCallback.set(_.get(this, 'reference.insert.onSuccess'));
+                autoProfileTemplate.currentErrorCallback.set(_.get(this, 'reference.insert.onError'));
+
                 Meteor.call(profileOptions.method, dbDoc, (error) => {
                     if (error) {
                         toastr.error(`Beim Speichern des Benutzerprofils ist ein Fehler aufgetreten: ${error}`);
