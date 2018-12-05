@@ -4,6 +4,12 @@
   {{else}}
     {{#if placeholder}}
       <img id="autoprofile-field-{{fieldId}}" data-field-id="{{fieldId}}" class="autoprofile-field js-autoprofile-field {{#if isEditable}}editable{{/if}}" src="{{placeholder}}" width="320" /> <!--nobody.jpg-->
+    {{else}}
+      <div class="card card-default">
+        <div id="autoprofile-field-{{fieldId}}" data-field-id="{{fieldId}}" class="autoprofile-field js-autoprofile-field {{#if isEditable}}editable{{/if}} w-100">
+          {{{placeholderMarkup}}}
+        </div>
+      </div>
     {{/if}}
   {{/if}}
 </template>

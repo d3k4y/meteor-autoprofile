@@ -25,7 +25,7 @@ function executeSuccessCallback(context, args) {
     return executeCallback('success', context, args);
 }
 function executeErrorCallback(context, args) {
-    return executeCallback('success', context, args);
+    return executeCallback('error', context, args);
 }
 
 /**
@@ -59,20 +59,23 @@ AutoForm.addHooks(['AutoProfileEditForm_UpdateSet', 'AutoProfileEditForm_UpdateS
             });
             updateDoc._id = this.currentDoc._id;
 
-            const beforeUpdateHook = window[_.get(this, 'formAttributes.callContext.onBeforeUpdate')];
+            const callContext = _.get(this, 'formAttributes.callContext');
+
+            // TODO: get rid of the beforeUpdateHook -> replace with modifyCallback
+            const beforeUpdateHook = window[_.get(callContext, 'onBeforeUpdate')];
             if (typeof beforeUpdateHook === 'function') {
                 beforeUpdateHook.call(this, dbDoc, updateDoc);
             }
 
-            this.result(updateDoc);
+            this.result(executeModifyCallback(this, [updateDoc, _.get(callContext, 'fieldDefinition'), callContext], updateDoc));
         },
     },
     onSuccess(formType, result) {
         executeSuccessCallback(this, [_.get(this, 'formAttributes.callContext.fieldDefinition'), result, formType]);
     },
     onError(formType, error) {
-        executeErrorCallback(this, [_.get(this, 'formAttributes.callContext.fieldDefinition'), error, formType]);
         console.error('AutoProfileAddArrayItemForm onError', this, formType, error);
+        executeErrorCallback(this, [_.get(this, 'formAttributes.callContext.fieldDefinition'), error, formType]);
     }
 });
 
@@ -107,23 +110,17 @@ AutoForm.addHooks(['AutoProfileEditForm_UpdateDoc'], {
             }
             const mergedDoc = _.merge({}, dbDoc || {}, doc);
             mergedDoc._id = this.currentDoc._id;
-            const mydoc = _.cloneDeep(mergedDoc);
-            this.result(mydoc);
-
-            /*
-            this.result({
-                _id: this.currentDoc._id,
-                profile: _.merge({}, dbDoc.profile || {}, doc.profile)
-            });
-            */
+            const resultDoc = _.cloneDeep(mergedDoc);
+            const callContext = _.get(this, 'formAttributes.callContext');
+            this.result(executeModifyCallback(this, [resultDoc, _.get(callContext, 'fieldDefinition'), callContext], resultDoc));
         },
     },
     onSuccess(formType, result) {
         executeSuccessCallback(this, [_.get(this, 'formAttributes.callContext.fieldDefinition'), result, formType]);
     },
     onError(formType, error) {
-        executeErrorCallback(this, [_.get(this, 'formAttributes.callContext.fieldDefinition'), error, formType]);
         console.error('AutoProfileAddArrayItemForm onError', this, formType, error);
+        executeErrorCallback(this, [_.get(this, 'formAttributes.callContext.fieldDefinition'), error, formType]);
     }
 });
 
@@ -150,22 +147,18 @@ AutoForm.addHooks(['AutoProfileAddArrayItemForm'], {
             }
             const mergedDoc = _.merge({}, dbDoc || {}, doc);
             mergedDoc._id = this.currentDoc._id;
-            this.result(this.collection._c2._simpleSchema.clean(_.cloneDeep(mergedDoc)));
 
-            /*
-            this.result({
-                _id: this.currentDoc._id,
-                profile: _.merge({}, dbDoc.profile || {}, doc.profile)
-            });
-            */
+            const resultDoc = this.collection._c2._simpleSchema.clean(_.cloneDeep(mergedDoc));
+            const callContext = _.get(this, 'formAttributes.callContext');
+            this.result(executeModifyCallback(this, [resultDoc, _.get(callContext, 'fieldDefinition'), callContext], resultDoc));
         },
     },
     onSuccess(formType, result) {
         executeSuccessCallback(this, [_.get(this, 'formAttributes.callContext.fieldDefinition'), result, formType]);
     },
     onError(formType, error) {
-        executeErrorCallback(this, [_.get(this, 'formAttributes.callContext.fieldDefinition'), error, formType]);
         console.error('AutoProfileAddArrayItemForm onError', this, formType, error);
+        executeErrorCallback(this, [_.get(this, 'formAttributes.callContext.fieldDefinition'), error, formType]);
     }
 });
 
@@ -182,7 +175,7 @@ AutoForm.addHooks(['AutoProfileCreateReferenceDocAndAddArrayItemForm'], {
         executeSuccessCallback(this, [_.get(this, 'formAttributes.callContext.fieldDefinition'), result, formType]);
     },
     onError(formType, error) {
-        executeErrorCallback(this, [_.get(this, 'formAttributes.callContext.fieldDefinition'), error, formType]);
         console.error('AutoProfileCreateReferenceDocAndAddArrayItemForm onError', this, formType, error);
+        executeErrorCallback(this, [_.get(this, 'formAttributes.callContext.fieldDefinition'), error, formType]);
     }
 });

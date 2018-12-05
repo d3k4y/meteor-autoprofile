@@ -201,7 +201,10 @@ Template.autoProfileField_string.events({
                 autoProfileTemplate.currentSuccessCallback.set(null);
                 autoProfileTemplate.currentErrorCallback.set(null);
                 Meteor.call(deleteConf.method, this._id, (error) => {
-                    if (error) deleteConf.onError.call(this, data, error);
+                    if (error) {
+                        console.error('ERROR in autoprofile-remove-array-item reference reverse', deleteConf.method, error);
+                        deleteConf.onError.call(this, data, error);
+                    }
                     else deleteConf.onSuccess.call(this, data);
                 });
             } else {
@@ -221,6 +224,7 @@ Template.autoProfileField_string.events({
 
                 Meteor.call(profileOptions.method, dbDoc, (error) => {
                     if (error) {
+                        console.error('ERROR in autoprofile-remove-array-item reference reverse', error);
                         toastr.error(`Beim Speichern des Benutzerprofils ist ein Fehler aufgetreten: ${error}`);
                     } else {
                         toastr.success('Das Benutzerprofil wurde erfolgreich aktualisiert');

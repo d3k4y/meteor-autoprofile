@@ -118,3 +118,5 @@ Template.autoProfileField_string_textarea.inheritsEventsFrom('autoProfileField_s
 Template.autoProfileField_array.inheritsEventsFrom('autoProfileField_string');
 Template.autoProfileField_object.inheritsEventsFrom('autoProfileField_string');
 Template.autoProfileField_array_object.inheritsEventsFrom('autoProfileField_string');
+
+Template.autoProfileField_string_reference.inheritsEventsFrom('autoProfileField_string');
