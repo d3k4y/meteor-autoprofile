@@ -1,9 +1,11 @@
 <template name="autoProfileField_fileCheckArray">
   {{#if fieldValue}}
     {{#each value in fieldValue}}
-      <span class="float-right icon-check cf-icon cf-icon-big"> </span>
-      <a class="{{getClass value}}" href="{{getLinkArray value}}">{{getFilename value}}</a>
-      <br>
+      {{#if getLinkArray value}}
+        <span class="float-right icon-check cf-icon cf-icon-big"> </span>
+        <a class="{{getClass value}}" href="{{getLinkArray value}}">{{getFilename value}}</a>
+        <br>
+      {{/if}}
     {{/each}}
   {{else}}
     <span class="float-right icon-cross cf-icon cf-icon-big"> </span> {{fieldTitle}}
