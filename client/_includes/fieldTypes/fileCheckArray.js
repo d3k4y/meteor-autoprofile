@@ -26,5 +26,8 @@ Template.autoProfileField_fileCheckArray.helpers({
                 }
             }
         }
+    },
+    getClass(value) {
+        return this.class;
     }
 });
