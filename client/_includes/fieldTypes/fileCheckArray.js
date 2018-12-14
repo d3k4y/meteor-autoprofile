@@ -9,7 +9,7 @@ Template.autoProfileField_fileCheckArray.helpers({
     getLinkArray(value) {
         if (typeof this.link === 'function') {
             const instance = Template.instance();
-            const fieldSchema = SimpleSchemaFunctions.getFieldSchema(getOptions(instance).collection, value);
+            const fieldSchema = SimpleSchemaFunctions.getFieldSchema(getOptions(instance).collection, this.id);
             return this.link.call(this, value, fieldSchema);
         }
         return null;
@@ -26,5 +26,8 @@ Template.autoProfileField_fileCheckArray.helpers({
                 }
             }
         }
+    },
+    getClass(value) {
+        return this.class;
     }
 });
