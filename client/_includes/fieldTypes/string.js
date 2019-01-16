@@ -204,8 +204,7 @@ Template.autoProfileField_string.events({
                     if (error) {
                         console.error('ERROR in autoprofile-remove-array-item reference reverse', deleteConf.method, error);
                         deleteConf.onError.call(this, data, error);
-                    }
-                    else deleteConf.onSuccess.call(this, data);
+                    } else deleteConf.onSuccess.call(this, data);
                 });
             } else {
                 const $base = $elem.closest('[data-array-index]');

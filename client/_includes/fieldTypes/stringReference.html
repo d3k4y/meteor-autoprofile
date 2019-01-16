@@ -2,8 +2,11 @@
   {{#if contentOnly}}
     {{#if referenceLabel}}
       <span id="autoprofile-field-{{id}}" data-field-id="{{id}}" class="autoprofile-field js-autoprofile-field {{#if isEditable}}editable{{/if}}">
-        <a href="{{referenceUrl}}">{{referenceLabel}}</a>
-        {{referenceLabel}}
+        {{#if reference.link}}
+          <a href="{{referenceUrl}}">{{referenceLabel}}</a>
+        {{else}}
+          {{referenceLabel}}
+        {{/if}}
       </span>
     {{else}}
       ?
@@ -12,7 +15,11 @@
     <li class="list-group-item text-right">
       <span class="pull-left"><strong>{{fieldTitle}}</strong></span>
       {{#if referenceLabel}}
-        <a href="{{referenceUrl}}">{{referenceLabel}}</a>
+        {{#if reference.link}}
+          <a href="{{referenceUrl}}">{{referenceLabel}}</a>
+        {{else}}
+          {{referenceLabel}}
+        {{/if}}
       {{else}}
         ?
       {{/if}}
