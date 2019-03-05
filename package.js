@@ -19,7 +19,7 @@ Package.onUse(function (api) {
         'reactive-var',
         'aldeed:template-extension@4.1.0',
         'corefi:meteor-autoform-enhanced-method@0.0.1',
-        'corefi:meteor-simple-schema-functions@0.0.1',
+        'd3k4y:meteor-simple-schema-functions@0.0.1',
     ]);
 
     api.use([
