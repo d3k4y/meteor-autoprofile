@@ -18,7 +18,6 @@ Package.onUse(function (api) {
         'tracker',
         'reactive-var',
         'aldeed:template-extension@4.1.0',
-        'corefi:meteor-autoform-enhanced-method@0.0.1',
         'd3k4y:meteor-simple-schema-functions@0.0.1',
     ]);
 
@@ -26,7 +25,8 @@ Package.onUse(function (api) {
         'aldeed:autoform@6.3.0',
         'd3k4y:autoform-modals@0.4.3',
         'd3k4y:files@1.10.0',
-        'd3k4y:autoform-files@2.2.0'
+        'd3k4y:autoform-files@2.2.0',
+        'corefi:meteor-autoform-enhanced-method@0.0.1',
     ], 'client', {weak: true});
 
     api.use([
