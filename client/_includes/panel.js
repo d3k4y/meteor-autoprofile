@@ -1,7 +1,7 @@
 /* eslint-disable consistent-return */
 import {Template} from "meteor/templating";
 import {_} from "meteor/erasaur:meteor-lodash";
-import {SimpleSchemaFunctions} from "meteor/corefi:meteor-simple-schema-functions";
+import {SimpleSchemaFunctions} from "meteor/d3k4y:meteor-simple-schema-functions";
 
 import {getOptions, getTemplate} from "./_api";
 
