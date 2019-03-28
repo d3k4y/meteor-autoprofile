@@ -1,6 +1,6 @@
 Package.describe({
     summary: "Generate profile pages / data-sheets based on simpl-schema",
-    version: "0.1.3.1",
+    version: "0.1.3",
     name: "d3k4y:meteor-autoprofile",
     git: "https://github.com/d3k4y/meteor-autoprofile"
 });
