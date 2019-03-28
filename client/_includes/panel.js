@@ -25,4 +25,7 @@ Template.autoProfilePanel.helpers({
     getTemplate() {
         return getTemplate(Template.instance(), this);
     },
+    doShowLoadingSpinner() {
+        return Template.instance().data.showLoadingSpinner();
+    }
 });
