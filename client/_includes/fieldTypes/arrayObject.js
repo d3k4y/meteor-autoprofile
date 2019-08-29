@@ -2,13 +2,31 @@
 import {Template} from "meteor/templating";
 import {_} from "meteor/erasaur:meteor-lodash";
 
-import {getFieldValue, getTemplate} from "../_api";
+import {getFieldValue, getTemplate, getOptions} from "../_api";
 
 
 /* Extend Field: AutoProfile array of objects Field */
 Template.autoProfileField_array_object.helpers({
     renderInplace() {
         return this.render === "inplace";
+    },
+    itemCount() {
+        const value = getFieldValue (Template.instance(), this.id || this, this)
+        if (value) {
+            return value.length;
+        }
+        return 0;
+    },
+    getAddButtonIconClass() {
+        const options = getOptions(Template.instance());
+        return options && options.addButtonIconClass ? options.addButtonIconClass : 'icon icon-plus';
+    },
+    getRemoveButtonIconClass() {
+        const options = getOptions(Template.instance());
+        return options && options.removeButtonIconClass ? options.removeButtonIconClass : 'icon icon-minus';
+    },
+    isFileField() {
+
     },
     titleFieldValue() {
         const parent = Template.instance().parent();
@@ -42,13 +60,18 @@ Template.autoProfileField_array_object.helpers({
                 const subfield = subfields[i];
                 const templateName = getTemplate(templateInstance, subfield);
                 const fieldValue = getFieldValue(parent, subfield.id, this);
-                if (templateName === "autoProfileField_file") {
+                if (i === 0) value = '';
+                else value += ' ';
+                if (templateName === "autoProfileField_array_object" && subfield.isFileField) {
+                    const fileCursor = subfield.fileCursor ? subfield.fileCursor(fieldValue) : null;
+                    if (fileCursor) {
+                        value += `<span data-field-id="${subfield.id}"><a href="${fileCursor.link()}" target="_blank">${fileCursor.name}</a></span>`;
+                    }
+                } else  if (templateName === "autoProfileField_file") {
                     const href = `/cdn/storage/${fieldValue._collectionName}/${fieldValue._id}/original/${fieldValue._id}.${fieldValue.extension}`;
                     return `<a href="${href}" target="_blank">${fieldValue.name}</a>`;
                 }
-                if (i === 0) value = '';
-                else value += ' ';
-                if (reference && reference.reverse) {
+                else if (reference && reference.reverse) {
                     const subfieldValue = _.get(this, subfield.id) || '?';
                     value += `
                         <span 

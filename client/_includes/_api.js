@@ -4,6 +4,7 @@ import {SimpleSchemaGroup} from "simpl-schema";
 import {_} from "meteor/erasaur:meteor-lodash";
 
 import {SimpleSchemaFunctions} from "meteor/d3k4y:meteor-simple-schema-functions";
+import {Blaze} from "meteor/blaze";
 
 
 export function dbg(...params) {
@@ -14,14 +15,34 @@ export function getCollectionByName(collectionName) {
     return typeof window !== 'undefined' ? window[collectionName] : global[collectionName];
 }
 
-export function getData (templateInstance) {
+export function getTemplateFromView(view) {
+    if (view._templateInstance) {
+        return view._templateInstance;
+    }
+    if (view.parentView) {
+        return getTemplateFromView(view.parentView);
+    }
+    return null;
+}
+
+export function getAutoprofileTemplate(templateInstance) {
     if (!templateInstance) { return undefined; }
-    if (templateInstance.view.name === 'Template.autoProfile') { return templateInstance.data; }
-    const autoProfileTemplate = templateInstance.parent((instance) => { return instance.view.name === 'Template.autoProfile'; });
+    if (templateInstance.parentView) {
+        templateInstance = getTemplateFromView(templateInstance)
+    }
+    if (templateInstance.view) {
+        if (templateInstance.view.name === 'Template.autoProfile') { return templateInstance; }
+    }
+    return templateInstance.parent(instance => instance.view.name === 'Template.autoProfile');
+}
+
+export function getData (templateInstance) {
+    const autoProfileTemplate = getAutoprofileTemplate(templateInstance);
     if (autoProfileTemplate) {
         return autoProfileTemplate.data;
     }
 }
+
 export function getOptions (templateInstance) {
     const data = getData(templateInstance);
     if (data) {
@@ -164,4 +185,39 @@ export function getTemplate (templateInstance, context) {
         dbg('getTemplate: fieldSchema not found!', fullName, context.id);
     }
     return "autoProfileField_string";
+}
+
+export function getHiddenClass(templateInstance) {
+    const options = getOptions(templateInstance);
+    return options && options.hiddenClass ? options.hiddenClass : 'd-none';
+}
+
+function getOptionsByDomElem(elem) {
+    const view = Blaze.getView(elem);
+    const parentTemplate = _.get(view, '_templateInstance') ? _.get(view, '_templateInstance') : _.get(view, 'parentView._templateInstance');
+    if(parentTemplate) {
+        const autoprofileTemplate = parentTemplate.parent((instance) => { return instance.view.name === 'Template.autoProfile'; });
+        if (autoprofileTemplate) {
+            return _.get(autoprofileTemplate, 'data.options');
+        }
+    }
+}
+
+export function disableInplaceEditing($autoprofileField, quickformView, hiddenClass) {
+    const $field = $autoprofileField.find('.autoprofile-field');
+    $field.removeClass(hiddenClass);
+    Blaze.remove(quickformView);
+}
+
+export function disableInplaceEditingByContextTemplate(template) {
+    const quickformTemplate = template.parent((instance) => { return instance.view.name === 'Template.quickForm'; });
+    if (quickformTemplate) {
+        const $parent = $(template.firstNode.parentNode);
+        const field = $parent.find('.autoprofile-field');
+        const options = getOptionsByDomElem(field[0]);
+        if (options) {
+            field.removeClass(options.hiddenClass);
+            Blaze.remove(quickformTemplate.view);
+        }
+    }
 }

@@ -13,8 +13,8 @@ Template.autoProfileField_string_reference.helpers({
     referenceLabel() {
         const ref = this.reference;
         const refId = getFieldValue(Template.instance(), this.id || this, this);
-        if (refId && ref && ref.collectionName) {
-            const collection = getCollectionByName(ref.collectionName);
+        if (refId && ref && ref.collection || ref.collectionName) {
+            const collection = ref.collection || getCollectionByName(ref.collectionName);
             if (collection) {
                 const relObj = collection.findOne(refId);
                 if (relObj) {

@@ -1,8 +1,9 @@
 import {Template} from 'meteor/templating';
 import {ReactiveVar} from 'meteor/reactive-var';
+import {_} from "meteor/erasaur:meteor-lodash";
 
 import './_includes/autoformHooks';
-import {getContext} from './_includes/_api';
+import {getContext, getHiddenClass} from './_includes/_api';
 
 import './autoprofile.html';
 import './_includes/panel.html';
@@ -32,6 +33,7 @@ import './autoprofile.css';
 
 
 Template.autoProfile.onCreated(function onRendered() {
+    window.autoprofileState_HiddenClass = new ReactiveVar(_.get(this.data, 'options.hiddenClass') || 'd-none');
     window.autoprofileState_FieldId = this.currentFieldId = new ReactiveVar('');
     window.autoprofileState_CallContext = this.currentCallContext = new ReactiveVar(null);
     window.autoprofileState_ArrayIndex = this.currentArrayIndex = new ReactiveVar('');
@@ -56,6 +58,16 @@ Template.autoProfile.onRendered(function onRendered() {
 });
 
 Template.autoProfile.helpers({
+    getEditButtonClass() {
+        return `btn btn-primary cf-button-primary js-edit-field-afmodalbutton ${getHiddenClass(Template.instance())}`;
+    },
+    getAddArrayItemButtonClass() {
+        return `btn btn-primary cf-button-primary js-add-array-item-afmodalbutton ${getHiddenClass(Template.instance())}`;
+    },
+    getCreateReferenceDocAndAddArrayItemButtonClass() {
+        return `btn btn-primary cf-button-primary js-create-reference-doc-and-add-array-item-afmodalbutton ${getHiddenClass(Template.instance())}`;
+    },
+
     getFields() {
         return Template.instance().currentFieldId.get();
     },
@@ -74,6 +86,12 @@ Template.autoProfile.helpers({
     getMethodArgs() {
         return Template.instance().data.options.methodargs;
     },
+    getMeteorUpdateMethod() {
+        if (Template.instance().currentMethod.get() || Template.instance().data.options.method) {
+            return "enhancedmethod";
+        }
+        return null;
+    },
     getDocId() {
         const context = getContext(Template.instance());
         return Template.instance().currentDocumentId.get() || context ? context._id : null;
@@ -81,12 +99,19 @@ Template.autoProfile.helpers({
     getCollectionName() {
         return Template.instance().currentCollectionName.get() || Template.instance().data.options.collectionName;
     },
+    getCollection() {
+        return Freelancers;
+    },
     getInstance() {
         return Template.instance();
     },
     getEditFormId() {
         const options = Template.instance().data.options;
         return options.updateType === 'updateSet' ? 'AutoProfileEditForm_UpdateSet' : 'AutoProfileEditForm_UpdateDoc';
+    },
+    getAutoprofileTemplate() {
+        const options = Template.instance().data.options;
+        return options.autoprofileTemplate || 'bootstrap4';
     }
 });
 

@@ -7,7 +7,7 @@ import toastr from "toastr";
 
 import {SimpleSchemaFunctions} from "meteor/d3k4y:meteor-simple-schema-functions";
 
-import {dbg, getData, getOptions, getContext, unifyNamespace, getNamespaceContext, getFieldValue, getTemplate, getCollectionByName} from '../_api';
+import {dbg, getData, getOptions, getContext, unifyNamespace, getNamespaceContext, getFieldValue, getTemplate, getCollectionByName, getHiddenClass, disableInplaceEditing, disableInplaceEditing2} from '../_api';
 
 
 Template.autoProfileField_string.helpers({
@@ -61,6 +61,11 @@ Template.autoProfileField_string.helpers({
         const fieldValue = getFieldValue(instance, this.id || this, this);
         const fieldSchema = SimpleSchemaFunctions.getFieldSchema(profileOptions.collection, this.id);
         const autoformOptions = _.get(fieldSchema, 'autoform.options');
+
+        if (fieldSchema && fieldSchema.type && fieldSchema.type.singleType === Date && !fieldValue) {
+            return '?';
+        }
+
         if (autoformOptions) {
             const option = _.find(autoformOptions, function(data) { return data.value === fieldValue; });
             if (option) {
@@ -76,7 +81,8 @@ Template.autoProfileField_string.helpers({
         if (typeof this.format === 'function') {
             return this.format.call(instance, fieldValue, fieldSchema);
         }
-        if (context && this.reference && this.reference.reverse && !raw) {
+
+        if (this.reference && context && this.reference.reverse && !raw) {
             const selector = {};
             const idSplit = this.id.split('.');
             if (idSplit.length > 1) {
@@ -88,6 +94,7 @@ Template.autoProfileField_string.helpers({
             }
             return getCollectionByName(this.reference.collectionName).find(selector).fetch();
         }
+
         return fieldValue;
     },
     urlFieldValue() {
@@ -125,28 +132,41 @@ Template.autoProfileField_string.events({
             autoProfileTemplate.currentErrorCallback.set(autoProfileOptions.onError);
 
             if (this.inplaceEditing || (this.fieldOptions && this.fieldOptions.inplaceEditing)) {
-                $elem.addClass('d-none');
-                const additionalButtonClasses = this.fieldOptions && this.fieldOptions.showButton ? '' : 'd-none';
-                Blaze.renderWithData(Template.quickForm, {
-                    id: autoProfileOptions.updateType === 'updateSet' ? 'AutoProfileEditForm_UpdateSetQuick' : 'AutoProfileEditForm_UpdateDocQuick',
+                const hiddenClass = getHiddenClass(templateInstance);
+                $elem.addClass(hiddenClass);
+                const additionalButtonClasses = this.fieldOptions && this.fieldOptions.showButton ? '' : hiddenClass;
+
+                const formId = autoProfileOptions.method ?
+                    (autoProfileOptions.updateType === 'updateSet' ? 'AutoProfileEditForm_UpdateSetQuick' : 'AutoProfileEditForm_UpdateDocQuick') :
+                    (autoProfileOptions.updateType === 'updateSet' ? 'AutoProfileEditForm_UpdateSet' : 'AutoProfileEditForm_UpdateDoc');
+                const $formParent = $elem.parent();
+                const formTemplate = Blaze.renderWithData(Template.quickForm, {
+                    id: formId,
                     fields: autoProfileTemplate.currentFieldId.get(),
                     collection: $subElem.attr('data-collection-name') || autoProfileOptions.collectionName,
                     meteormethod: autoProfileOptions.method,
                     meteormethodargs: autoProfileOptions.methodargs,
                     doc: docId ? collection.findOne(docId) : autoProfileTemplate.data.myContext,
                     callContext: autoProfileTemplate.currentCallContext.get(),
-                    type: 'enhancedmethod',
+                    type: autoProfileOptions.method ? 'enhancedmethod' : 'update',
                     operation: 'update',
                     buttonContent: 'Speichern',
                     buttonClasses: `btn cf-button-modals p-2 ${additionalButtonClasses}`,
                     placeholder: true,
-                    template: 'bootstrap4',
+                    template: autoProfileOptions.autoprofileTemplate || 'bootstrap4',
                     title: 'Profil bearbeiten',
-                    class: 'autoprofile-quickform',
+                    class: `autoprofile-quickform ${this.fieldOptions.broad ? 'broad' : ''}`,
                     validationScope: 'fields',
                     validation: 'keyup',
                     doNotClean: true
-                }, $elem.parent()[0]);
+                }, $formParent[0]);
+                Meteor.defer(() => {
+                    const $input = $formParent.find('input');
+                    $input.focus();
+                    $input.on('blur', () => {
+                        disableInplaceEditing($formParent, formTemplate, autoProfileOptions.hiddenClass || 'd-none');
+                    });
+                });
             } else {
                 Meteor.defer(() => { $root.find('.js-edit-field-afmodalbutton')[0].click(); });
             }
@@ -159,7 +179,8 @@ Template.autoProfileField_string.events({
         const $root = $elem.closest('.autoprofile-container');
         if (autoProfileTemplate.data.options.editingEnabled && (typeof templateInstance.data.editable === 'undefined' || templateInstance.data.editable)) {
             const collectionName = _.get(this, 'reference.collectionName');
-            const currentFieldId = this.reference ? _.get(this, 'titleField.id') : `${$elem.closest('[data-field-id]').attr('data-field-id')}.999999`;
+            const $fieldRoot = $elem.closest('[data-field-id]');
+            const currentFieldId = this.reference ? _.get(this, 'titleField.id') : `${$fieldRoot.attr('data-field-id')}.${$fieldRoot.attr('data-item-count')}`;
             autoProfileTemplate.currentFieldId.set(currentFieldId);
             autoProfileTemplate.currentArrayIndex.set(null);
             autoProfileTemplate.currentCollectionName.set(collectionName);
@@ -195,17 +216,42 @@ Template.autoProfileField_string.events({
         const $elem = $(event.currentTarget);
         const data = templateInstance.data;
         if (typeof data.editable === 'undefined' || data.editable) {
-            if (_.get(data, 'reference.reverse')) {
-                const deleteConf = _.get(data, 'reference.delete');
-                autoProfileTemplate.currentModifyCallback.set(null);
-                autoProfileTemplate.currentSuccessCallback.set(null);
-                autoProfileTemplate.currentErrorCallback.set(null);
-                Meteor.call(deleteConf.method, this._id, (error) => {
-                    if (error) {
-                        console.error('ERROR in autoprofile-remove-array-item reference reverse', deleteConf.method, error);
-                        deleteConf.onError.call(this, data, error);
-                    } else deleteConf.onSuccess.call(this, data);
-                });
+            if (autoProfileTemplate.currentMethod.get() || profileOptions.method) {
+                if (_.get(data, 'reference.reverse')) {
+                    const deleteConf = _.get(data, 'reference.delete');
+                    autoProfileTemplate.currentModifyCallback.set(null);
+                    autoProfileTemplate.currentSuccessCallback.set(null);
+                    autoProfileTemplate.currentErrorCallback.set(null);
+                    Meteor.call(deleteConf.method, this._id, (error) => {
+                        if (error) {
+                            console.error('ERROR in autoprofile-remove-array-item reference reverse', deleteConf.method, error);
+                            deleteConf.onError.call(this, data, error);
+                        } else deleteConf.onSuccess.call(this, data);
+                    });
+                } else {
+                    const $base = $elem.closest('[data-array-index]');
+                    const arrayIndex = $base.attr('data-array-index');
+                    const fieldIdSplit = `${$base.closest('[data-field-id]').attr('data-field-id')}`.split('.');
+                    const dbDoc = profileOptions.collection.findOne(getContext(templateInstance)._id);
+                    let currentDbDoc = dbDoc;
+                    for (let i = 0; i < fieldIdSplit.length; i++) {
+                        currentDbDoc = currentDbDoc[fieldIdSplit[i]];
+                    }
+                    currentDbDoc.splice(arrayIndex, 1);
+
+                    autoProfileTemplate.currentModifyCallback.set(_.get(this, 'reference.insert.onBefore'));
+                    autoProfileTemplate.currentSuccessCallback.set(_.get(this, 'reference.insert.onSuccess'));
+                    autoProfileTemplate.currentErrorCallback.set(_.get(this, 'reference.insert.onError'));
+
+                    Meteor.call(profileOptions.method, dbDoc, (error) => {
+                        if (error) {
+                            console.error('ERROR in autoprofile-remove-array-item reference reverse', error);
+                            toastr.error(`Beim Speichern des Benutzerprofils ist ein Fehler aufgetreten: ${error}`);
+                        } else {
+                            toastr.success('Das Benutzerprofil wurde erfolgreich aktualisiert');
+                        }
+                    });
+                }
             } else {
                 const $base = $elem.closest('[data-array-index]');
                 const arrayIndex = $base.attr('data-array-index');
@@ -216,19 +262,10 @@ Template.autoProfileField_string.events({
                     currentDbDoc = currentDbDoc[fieldIdSplit[i]];
                 }
                 currentDbDoc.splice(arrayIndex, 1);
-
-                autoProfileTemplate.currentModifyCallback.set(_.get(this, 'reference.insert.onBefore'));
-                autoProfileTemplate.currentSuccessCallback.set(_.get(this, 'reference.insert.onSuccess'));
-                autoProfileTemplate.currentErrorCallback.set(_.get(this, 'reference.insert.onError'));
-
-                Meteor.call(profileOptions.method, dbDoc, (error) => {
-                    if (error) {
-                        console.error('ERROR in autoprofile-remove-array-item reference reverse', error);
-                        toastr.error(`Beim Speichern des Benutzerprofils ist ein Fehler aufgetreten: ${error}`);
-                    } else {
-                        toastr.success('Das Benutzerprofil wurde erfolgreich aktualisiert');
-                    }
-                });
+                const setDoc = {};
+                setDoc[fieldIdSplit[0]] = dbDoc[fieldIdSplit[0]];
+                console.error('updateField', currentDbDoc, dbDoc, setDoc);
+                profileOptions.collection.update(dbDoc._id, {$set: setDoc});
             }
         }
         event.preventDefault();

@@ -1,6 +1,6 @@
 <template name="autoProfileField_array_object">
   {{#if renderInplace}}
-    <ul class="list-group" data-field-id="{{fieldId}}" data-field-type="autoProfileField_array_object">
+    <ul class="list-group" data-field-id="{{fieldId}}" data-field-type="autoProfileField_array_object" data-item-count="{{itemCount}}">
       {{#each fieldValue}}
         <li class="list-group-item text-right autoprofile-field js-autoprofile-field {{#if isEditable}}editable{{/if}}" data-array-index="{{@index}}" data-parent-field-id="{{..fieldId}}">
           <span class="pull-left"><strong>{{{titleFieldValue}}}</strong></span>
@@ -10,17 +10,17 @@
             {{{contentFieldValue}}}
           {{/if}}
           {{#if isEditable}}
-            <button type="button" class="btn btn-primary btn-sm js-autoprofile-remove-array-item"><span class="icon icon-minus"></span></button>
+            <button type="button" class="btn btn-primary btn-sm js-autoprofile-remove-array-item"><span class="{{getRemoveButtonIconClass}}"></span></button>
           {{/if}}
         </li>
       {{/each}}
       {{#if isEditable}}
-        <button type="button" class="btn btn-primary btn-sm js-autoprofile-add-array-item" data-autoform-field="{{this.atts.name}}"><span class="icon icon-plus"></span></button>
+        <button type="button" class="btn btn-primary btn-sm js-autoprofile-add-array-item" data-autoform-field="{{this.atts.name}}"><span class="{{getAddButtonIconClass}}"></span></button>
       {{/if}}
     </ul>
   {{else}}
     <!--SUBLIST: TODO-->
-    <ul class="list-group" data-field-id="{{fieldId}}" data-field-type="autoProfileField_array_object">
+    <ul class="list-group" data-field-id="{{fieldId}}" data-field-type="autoProfileField_array_object" data-item-count="{{itemCount}}">
       {{#each fieldValue}}
         <li class="list-group-item text-right autoprofile-field js-autoprofile-field {{#if isEditable}}editable{{/if}}" data-array-index="{{@index}}" data-parent-field-id="{{..fieldId}}">
           <strong class="pull-left">{{{titleFieldValue}}}</strong>
@@ -30,12 +30,12 @@
             {{{contentFieldValue}}}
           {{/if}}
           {{#if isEditable}}
-            <button type="button" class="btn btn-primary btn-sm js-autoprofile-remove-array-item"><span class="icon icon-minus"></span></button>
+            <button type="button" class="btn btn-primary btn-sm js-autoprofile-remove-array-item"><span class="{{getRemoveButtonIconClass}}"></span></button>
           {{/if}}
         </li>
       {{/each}}
       {{#if isEditable}}
-        <button type="button" class="btn btn-primary btn-sm js-autoprofile-add-array-item" data-autoform-field="{{this.atts.name}}"><span class="icon icon-plus"></span></button>
+        <button type="button" class="btn btn-primary btn-sm js-autoprofile-add-array-item" data-autoform-field="{{this.atts.name}}"><span class="{{getAddButtonIconClass}}"></span></button>
       {{/if}}
     </ul>
   {{/if}}

@@ -24,17 +24,17 @@
                   collection=getCollectionName
                   meteormethod=getMethod
                   meteormethodargs=getMethodArgs
+                  meteorupdatemethod=getMeteorUpdateMethod
                   doc=getDocId
                   callContext=getCallContext
-                  meteorupdatemethod="enhancedmethod"
                   operation="update"
                   buttonContent="Speichern"
                   buttonClasses="btn cf-button-modals p-2"
                   placeholder=true
-                  template = "bootstrap4"
+                  template = getAutoprofileTemplate
                   title="Profil bearbeiten"
                   backdrop=true
-                  class="btn btn-primary cf-button-primary js-edit-field-afmodalbutton d-none"
+                  class=getEditButtonClass
                   validationScope="fields"
                   validation="keyup"
                   doNotClean=true
@@ -44,16 +44,18 @@
                   fields=getFields
                   collection=getCollectionName
                   meteormethod=getMethod
+                  validationScope="fields"
+                  validation="submit"
                   doc=getDocId
                   callContext=getCallContext
                   operation="update"
                   buttonContent="Speichern"
                   buttonClasses="btn cf-button-modals p-2"
                   placeholder=true
-                  template = "bootstrap4"
+                  template = getAutoprofileTemplate
                   title="Eintrag Hinzufügen"
                   backdrop=true
-                  class="btn btn-primary cf-button-primary js-add-array-item-afmodalbutton d-none"
+                  class=getAddArrayItemButtonClass
       }}<span class="icon-user"></span> Hinzufügen{{/afModal}}
 
       {{#afModal  formId="AutoProfileCreateReferenceDocAndAddArrayItemForm"
@@ -61,14 +63,16 @@
                   collection=getCollectionName
                   meteormethod=getMethod
                   callContext=getCallContext
+                  validationScope="fields"
+                  validation="submit"
                   operation="insert"
                   buttonContent="Erstellen"
                   buttonClasses="btn cf-button-modals p-2"
                   placeholder=true
-                  template = "bootstrap4"
+                  template = getAutoprofileTemplate
                   title="Eintrag Hinzufügen"
                   backdrop=true
-                  class="btn btn-primary cf-button-primary js-create-reference-doc-and-add-array-item-afmodalbutton d-none"
+                  class=getCreateReferenceDocAndAddArrayItemButtonClass
       }}<span class="icon-user"></span> erstellen{{/afModal}}
     </div>
   {{else}}
@@ -95,4 +99,3 @@
     {{/each}}
   </div>
 </template>
-

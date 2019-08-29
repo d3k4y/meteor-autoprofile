@@ -2,9 +2,12 @@ import {Blaze} from "meteor/blaze";
 import {AutoForm} from 'meteor/aldeed:autoform';
 import {_} from "meteor/erasaur:meteor-lodash";
 
+import {getAutoprofileTemplate, getTemplateFromView, disableInplaceEditingByContextTemplate} from './_api.js';
+
 
 function executeCallback(type, context, args, rtrn = null) {
     const types = {
+        update: 'autoprofileState_SuccessCallback',
         modify: 'autoprofileState_ModifyCallback',
         success: 'autoprofileState_SuccessCallback',
         error: 'autoprofileState_ErrorCallback',
@@ -28,12 +31,18 @@ function executeErrorCallback(context, args) {
     return executeCallback('error', context, args);
 }
 
+
 /**
  * DOCUMENTATION:
  *      - https://github.com/aldeed/meteor-autoform#callbackshooks
  */
 AutoForm.addHooks(['AutoProfileEditForm_UpdateSet', 'AutoProfileEditForm_UpdateSetQuick'], {
     before: {
+        update(doc) {
+            console.error('AutoProfileEditForm_UpdateSet, AutoProfileEditForm_UpdateSetQuick update HOOK', doc, this);
+            this.result(doc);
+        },
+
         enhancedmethod: function (doc) {
             const dbDoc = this.collection.findOne(this.currentDoc._id);
             const fieldId = window.autoprofileState_FieldId.get();
@@ -82,17 +91,34 @@ AutoForm.addHooks(['AutoProfileEditForm_UpdateSet', 'AutoProfileEditForm_UpdateS
 AutoForm.addHooks(['AutoProfileEditForm_UpdateSetQuick'], {
     after: {
         enhancedmethod: function (foo, bar, bla) {
-            const parent = $(this.template.firstNode.parentNode);
-            const field = parent.find('.autoprofile-field');
-            field.removeClass('d-none');
-            const quickformTemplate = this.template.parent((instance) => { return instance.view.name === 'Template.quickForm'; });
-            Blaze.remove(quickformTemplate.view);
+            disableInplaceEditingByContextTemplate(this.template);
         }
     },
 });
 
 AutoForm.addHooks(['AutoProfileEditForm_UpdateDoc'], {
     before: {
+        update(doc) {
+            const dbDoc = this.collection.findOne(this.currentDoc._id);
+            const subFieldId = $(_.get(this, 'template.firstNode.parentNode')).find('input').attr('name');
+            let offset = null;
+            if (subFieldId) {
+                const subFieldIdSplit = subFieldId.split('.');
+                if (subFieldIdSplit.length === 3) {
+                    const fieldId = subFieldIdSplit[0];
+                    offset = parseInt(subFieldIdSplit[1]);
+                    if (_.isNumber(offset)) {
+                        const subDoc = _.get(doc, `$set.${fieldId}`);
+                        const dbSubDoc = _.get(dbDoc, fieldId);
+                        dbSubDoc[offset] = subDoc[subDoc.length - 1];
+                        doc.$set[subFieldIdSplit[0]] = dbSubDoc;
+                    }
+                }
+            }
+            disableInplaceEditingByContextTemplate(this.template);
+            const autoprofileTemplate = getAutoprofileTemplate(this.template, true);
+            this.result(doc);
+        },
         enhancedmethod: function (doc) {
             const dbDoc = this.collection.findOne(this.currentDoc._id);
             const fieldId = window.autoprofileState_FieldId.get();
@@ -116,10 +142,15 @@ AutoForm.addHooks(['AutoProfileEditForm_UpdateDoc'], {
         },
     },
     onSuccess(formType, result) {
+        const autoprofileTemplate = getTemplateFromView(Blaze.getView($('.tab-pane.active .autoprofile-container')[0]));
+        const successCallback = _.get(autoprofileTemplate, 'data.options.onSuccess');
+        if (successCallback) {
+            successCallback.call(this, {}, result, formType);
+        }
         executeSuccessCallback(this, [_.get(this, 'formAttributes.callContext.fieldDefinition'), result, formType]);
     },
     onError(formType, error) {
-        console.error('AutoProfileAddArrayItemForm onError', this, formType, error);
+        console.error('AutoProfileEditForm onError', this, formType, error);
         executeErrorCallback(this, [_.get(this, 'formAttributes.callContext.fieldDefinition'), error, formType]);
     }
 });
@@ -127,7 +158,17 @@ AutoForm.addHooks(['AutoProfileEditForm_UpdateDoc'], {
 
 AutoForm.addHooks(['AutoProfileAddArrayItemForm'], {
     before: {
+        update(doc, foo, bar) {
+            const dbDoc = this.collection.findOne(this.currentDoc._id);
+            const fieldId = this.formAttributes.callContext.id;
+            const subDoc = _.get(doc, `$set.${fieldId}`);
+            const dbSubDoc = _.get(dbDoc, fieldId) || [];
+            dbSubDoc.push(subDoc[subDoc.length - 1]);
+            doc.$set[fieldId] = dbSubDoc;
+            this.result(doc);
+        },
         method: function (doc) {
+            console.error('AutoProfileAddArrayItemForm HOOK');
             const dbDoc = this.collection.findOne(this.currentDoc._id);
             const fieldId = window.autoprofileState_FieldId.get();
             const fieldIdSplit = fieldId.split('.');
@@ -154,6 +195,7 @@ AutoForm.addHooks(['AutoProfileAddArrayItemForm'], {
         },
     },
     onSuccess(formType, result) {
+        console.error('onSuccess2', formType, result);
         executeSuccessCallback(this, [_.get(this, 'formAttributes.callContext.fieldDefinition'), result, formType]);
     },
     onError(formType, error) {
@@ -166,9 +208,11 @@ AutoForm.addHooks(['AutoProfileAddArrayItemForm'], {
 AutoForm.addHooks(['AutoProfileCreateReferenceDocAndAddArrayItemForm'], {
     before: {
         method: function (doc) {
+            console.error('AutoProfileCreateReferenceDocAndAddArrayItemForm1');
             const callContext = _.get(this, 'formAttributes.callContext');
             doc[callContext.fieldName] = callContext.fieldValue;
             this.result(executeModifyCallback(this, [doc, callContext.fieldDefinition, callContext], doc));
+            console.error('AutoProfileCreateReferenceDocAndAddArrayItemForm2');
         },
     },
     onSuccess(formType, result) {
