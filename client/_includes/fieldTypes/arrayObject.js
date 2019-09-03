@@ -10,24 +10,6 @@ Template.autoProfileField_array_object.helpers({
     renderInplace() {
         return this.render === "inplace";
     },
-    itemCount() {
-        const value = getFieldValue (Template.instance(), this.id || this, this)
-        if (value) {
-            return value.length;
-        }
-        return 0;
-    },
-    getAddButtonIconClass() {
-        const options = getOptions(Template.instance());
-        return options && options.addButtonIconClass ? options.addButtonIconClass : 'icon icon-plus';
-    },
-    getRemoveButtonIconClass() {
-        const options = getOptions(Template.instance());
-        return options && options.removeButtonIconClass ? options.removeButtonIconClass : 'icon icon-minus';
-    },
-    isFileField() {
-
-    },
     titleFieldValue() {
         const parent = Template.instance().parent();
         const data = _.get(parent, 'data.data');
@@ -70,6 +52,9 @@ Template.autoProfileField_array_object.helpers({
                 } else  if (templateName === "autoProfileField_file") {
                     const href = `/cdn/storage/${fieldValue._collectionName}/${fieldValue._id}/original/${fieldValue._id}.${fieldValue.extension}`;
                     return `<a href="${href}" target="_blank">${fieldValue.name}</a>`;
+                }
+                else if (subfield && subfield.link) {
+                    value += `<a href="${fieldValue}" target="_blank">${fieldValue}</a>`;
                 }
                 else if (reference && reference.reverse) {
                     const subfieldValue = _.get(this, subfield.id) || '?';

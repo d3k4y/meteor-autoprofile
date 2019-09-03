@@ -1,9 +1,11 @@
 <!-- TODO: make it possible to somehow switch view here -->
 <template name="autoProfileField_array">
-  <ul class="list-group" data-field-id="{{fieldId}}" data-field-type="autoProfileField_array">
+  <ul class="list-group" data-field-id="{{fieldId}}" data-field-type="autoProfileField_array" data-item-count="{{itemCount}}">
+    <button type="button" class="btn btn-primary btn-sm js-autoprofile-add-array-item" data-autoform-field="{{this.atts.name}}"><span class="{{getAddButtonIconClass}}"></span></button>
     {{#each fieldValue}}
-      <li class="list-group-item text-muted" data-array-index="{{@index}}">
+      <li class="list-group-item text-muted autoprofile-field js-autoprofile-field {{#if isEditable}}editable{{/if}}" data-array-index="{{@index}}">
         {{this}}
+        <button type="button" class="btn btn-primary btn-sm js-autoprofile-remove-array-item"><span class="{{getRemoveButtonIconClass}}"></span></button>
       </li>
     {{/each}}
   </ul>

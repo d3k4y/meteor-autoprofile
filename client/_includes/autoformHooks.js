@@ -101,10 +101,11 @@ AutoForm.addHooks(['AutoProfileEditForm_UpdateDoc'], {
         update(doc) {
             const dbDoc = this.collection.findOne(this.currentDoc._id);
             const subFieldId = $(_.get(this, 'template.firstNode.parentNode')).find('input').attr('name');
+            console.error('AutoForm.addHooks AutoProfileEditForm_UpdateDoc', dbDoc, subFieldId);
             let offset = null;
             if (subFieldId) {
                 const subFieldIdSplit = subFieldId.split('.');
-                if (subFieldIdSplit.length === 3) {
+                if (subFieldIdSplit.length === 3 || subFieldIdSplit.length === 2) {
                     const fieldId = subFieldIdSplit[0];
                     offset = parseInt(subFieldIdSplit[1]);
                     if (_.isNumber(offset)) {
@@ -158,7 +159,8 @@ AutoForm.addHooks(['AutoProfileEditForm_UpdateDoc'], {
 
 AutoForm.addHooks(['AutoProfileAddArrayItemForm'], {
     before: {
-        update(doc, foo, bar) {
+        update(doc) {
+            console.error('AutoForm.addHooks AutoProfileAddArrayItemForm');
             const dbDoc = this.collection.findOne(this.currentDoc._id);
             const fieldId = this.formAttributes.callContext.id;
             const subDoc = _.get(doc, `$set.${fieldId}`);

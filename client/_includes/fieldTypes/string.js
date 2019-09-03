@@ -103,6 +103,21 @@ Template.autoProfileField_string.helpers({
         }
         return false;
     },
+    getAddButtonIconClass() {
+        const options = getOptions(Template.instance());
+        return options && options.addButtonIconClass ? options.addButtonIconClass : 'icon icon-plus';
+    },
+    getRemoveButtonIconClass() {
+        const options = getOptions(Template.instance());
+        return options && options.removeButtonIconClass ? options.removeButtonIconClass : 'icon icon-minus';
+    },
+    itemCount() {
+        const value = getFieldValue (Template.instance(), this.id || this, this)
+        if (value) {
+            return value.length;
+        }
+        return 0;
+    },
 });
 
 Template.autoProfileField_string.events({
@@ -130,6 +145,7 @@ Template.autoProfileField_string.events({
             autoProfileTemplate.currentModifyCallback.set(autoProfileOptions.onBefore);
             autoProfileTemplate.currentSuccessCallback.set(autoProfileOptions.onSuccess);
             autoProfileTemplate.currentErrorCallback.set(autoProfileOptions.onError);
+            console.error('click .js-autoprofile-field', currentFieldId, arrayIndex);
 
             if (this.inplaceEditing || (this.fieldOptions && this.fieldOptions.inplaceEditing)) {
                 const hiddenClass = getHiddenClass(templateInstance);
@@ -177,6 +193,7 @@ Template.autoProfileField_string.events({
         const autoProfileTemplate = templateInstance.parent((instance) => { return instance.view.name === 'Template.autoProfile'; });
         const $elem = $(event.currentTarget);
         const $root = $elem.closest('.autoprofile-container');
+
         if (autoProfileTemplate.data.options.editingEnabled && (typeof templateInstance.data.editable === 'undefined' || templateInstance.data.editable)) {
             const collectionName = _.get(this, 'reference.collectionName');
             const $fieldRoot = $elem.closest('[data-field-id]');
@@ -202,7 +219,12 @@ Template.autoProfileField_string.events({
                 autoProfileTemplate.currentModifyCallback.set(options.onBefore);
                 autoProfileTemplate.currentSuccessCallback.set(options.onSuccess);
                 autoProfileTemplate.currentErrorCallback.set(options.onError);
-                Meteor.defer(() => { $root.find('.js-add-array-item-afmodalbutton')[0].click(); });
+                console.error('click .js-autoprofile-add-array-item1', autoProfileTemplate.currentFieldId.get());
+                Meteor.defer(() => {
+                    console.error('click .js-autoprofile-add-array-item2', autoProfileTemplate.currentFieldId.get());
+                    $root.find('.js-add-array-item-afmodalbutton')[0].click();
+                    console.error('click .js-autoprofile-add-array-item3');
+                });
             }
         }
         event.preventDefault();
