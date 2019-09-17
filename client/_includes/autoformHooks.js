@@ -147,8 +147,9 @@ AutoForm.addHooks(['AutoProfileEditForm_UpdateDoc'], {
         const successCallback = _.get(autoprofileTemplate, 'data.options.onSuccess');
         if (successCallback) {
             successCallback.call(this, {}, result, formType);
+        } else {
+            executeSuccessCallback(this, [_.get(this, 'formAttributes.callContext.fieldDefinition'), result, formType]);
         }
-        executeSuccessCallback(this, [_.get(this, 'formAttributes.callContext.fieldDefinition'), result, formType]);
     },
     onError(formType, error) {
         console.error('AutoProfileEditForm onError', this, formType, error);
