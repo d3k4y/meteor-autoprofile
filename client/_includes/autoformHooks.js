@@ -143,8 +143,16 @@ AutoForm.addHooks(['AutoProfileEditForm_UpdateDoc'], {
         },
     },
     onSuccess(formType, result) {
-        const autoprofileTemplate = getTemplateFromView(Blaze.getView($('.tab-pane.active .autoprofile-container')[0]));
-        const successCallback = _.get(autoprofileTemplate, 'data.options.onSuccess');
+        const autoprofileContainer = $('.tab-pane.active .autoprofile-container')[0];
+        let successCallback = null;
+        if (autoprofileContainer) {
+            try {
+                const view = Blaze.getView(autoprofileContainer);
+                if (view) {
+                    successCallback = _.get(getTemplateFromView(view), 'data.options.onSuccess');
+                }
+            } catch (Ex) {}
+        }
         if (successCallback) {
             successCallback.call(this, {}, result, formType);
         } else {
