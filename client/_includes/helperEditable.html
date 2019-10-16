@@ -13,7 +13,7 @@
         {{else if urlFieldValue}}
           <a href="{{urlFieldValue}}" target="_blank">{{fieldValue}}</a>
         {{else if link}}
-          <a href="{{fieldValue}}">{{fieldValue}}</a>
+          <a href="{{fieldValue}}" target="{{linkTarget}}">{{fieldValue}}</a>
         {{else if isUrl}}
           <a href="{{fieldValue}}" target="_blank">{{fieldValue}}</a>
         {{else}}

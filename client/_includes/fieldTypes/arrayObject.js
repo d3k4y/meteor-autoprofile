@@ -73,4 +73,34 @@ Template.autoProfileField_array_object.helpers({
         // return "Error: subfields not Set in array of objects context";
         return '';
     },
+    tooltipValue() {
+        const templateInstance = Template.instance();
+        const tooltip = templateInstance.data.tooltip;
+        if(tooltip && typeof tooltip.render === 'function') {
+            return tooltip.render(this, templateInstance);
+        }
+    },
+    tooltipDirection() {
+        const templateInstance = Template.instance();
+        const tooltip = templateInstance.data.tooltip;
+        return tooltip ? tooltip.direction : null;
+    },
+    tooltipClasses() {
+        const templateInstance = Template.instance();
+        const tooltip = templateInstance.data.tooltip;
+        return tooltip ? tooltip.classes : null;
+    }
+});
+
+
+Template.autoProfileField_array_object.events({
+    'mouseout'(event, template, doc) {
+        const $toElement = $(event.toElement);
+        if ($toElement.hasClass('tooltip') || $toElement.closest('.tooltip')[0]) {
+            event.stopPropagation();
+            $toElement.on('mouseleave', (event) => {
+                Tooltips.hide();
+            });
+        }
+    }
 });

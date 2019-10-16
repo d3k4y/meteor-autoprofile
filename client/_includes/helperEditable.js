@@ -7,5 +7,5 @@ Template.autoProfileFieldHelper_editable.helpers({
         if (this.fieldOptions && this.fieldOptions.value) { return false; }
         const fieldOptions = Template.instance().data.fieldOptions;
         return fieldOptions && (typeof fieldOptions.editable === 'undefined' || fieldOptions.editable);
-    }
+    },
 });
