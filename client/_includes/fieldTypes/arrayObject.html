@@ -28,7 +28,13 @@
     <!--SUBLIST: TODO-->
     <ul class="list-group" data-field-id="{{fieldId}}" data-field-type="autoProfileField_array_object" data-item-count="{{itemCount}}">
       {{#each fieldValue}}
-        <li class="list-group-item text-right autoprofile-field js-autoprofile-field {{#if isEditable}}editable{{/if}}" data-array-index="{{@index}}" data-parent-field-id="{{..fieldId}}">
+        <li
+                class="list-group-item text-right autoprofile-field js-autoprofile-field {{#if isEditable}}editable{{/if}}"
+                data-array-index="{{@index}}"
+                data-parent-field-id="{{..fieldId}}"
+                data-tooltip="{{tooltipValue}}"
+                data-tooltip-direction="{{tooltipDirection}}"
+                data-tooltip-classes="{{tooltipClasses}}">
           <strong class="pull-left">{{{titleFieldValue}}}</strong>
           {{#if isFileField}}
             {{>autoProfileField_file}}

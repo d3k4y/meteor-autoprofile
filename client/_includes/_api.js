@@ -5,6 +5,7 @@ import {_} from "meteor/erasaur:meteor-lodash";
 
 import {SimpleSchemaFunctions} from "meteor/d3k4y:meteor-simple-schema-functions";
 import {Blaze} from "meteor/blaze";
+import {Template} from "meteor/templating";
 
 
 export function dbg(...params) {
@@ -219,5 +220,32 @@ export function disableInplaceEditingByContextTemplate(template) {
             field.removeClass(options.hiddenClass);
             Blaze.remove(quickformTemplate.view);
         }
+    }
+}
+
+export function getTooltipValue(templateInstance, searchTerm) {
+    const tooltip = templateInstance.data.tooltip;
+    if(tooltip && typeof tooltip.render === 'function') {
+        return tooltip.render(searchTerm, templateInstance);
+    }
+}
+
+export function getTooltipDirection(templateInstance) {
+    const tooltip = templateInstance.data.tooltip;
+    return tooltip ? tooltip.direction : null;
+}
+
+export function getTooltipClasses(templateInstance) {
+    const tooltip = templateInstance.data.tooltip;
+    return tooltip ? tooltip.classes : null;
+}
+
+export function handleMouseoutEvent(event) {
+    const $toElement = $(event.toElement);
+    if ($toElement.hasClass('tooltip') || $toElement.closest('.tooltip')[0]) {
+        event.stopPropagation();
+        $toElement.on('mouseleave', (event) => {
+            Tooltips.hide();
+        });
     }
 }

@@ -3,7 +3,12 @@
   <ul class="list-group" data-field-id="{{fieldId}}" data-field-type="autoProfileField_array" data-item-count="{{itemCount}}">
     <button type="button" class="btn btn-primary btn-sm js-autoprofile-add-array-item" data-autoform-field="{{this.atts.name}}"><span class="{{getAddButtonIconClass}}"></span></button>
     {{#each fieldValue}}
-      <li class="list-group-item text-muted autoprofile-field js-autoprofile-field {{#if isEditable}}editable{{/if}}" data-array-index="{{@index}}">
+      <li
+              class="list-group-item text-muted autoprofile-field js-autoprofile-field {{#if isEditable}}editable{{/if}}"
+              data-array-index="{{@index}}"
+              data-tooltip="{{tooltipValue}}"
+              data-tooltip-direction="{{tooltipDirection}}"
+              data-tooltip-classes="{{tooltipClasses}}">
         {{this}}
         <button type="button" class="btn btn-primary btn-sm js-autoprofile-remove-array-item"><span class="{{getRemoveButtonIconClass}}"></span></button>
       </li>

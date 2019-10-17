@@ -2,7 +2,7 @@
 import {Template} from "meteor/templating";
 import {_} from "meteor/erasaur:meteor-lodash";
 
-import {getFieldValue, getTemplate, getOptions} from "../_api";
+import {getFieldValue, getTemplate, getOptions, getTooltipDirection, getTooltipClasses, getTooltipValue, handleMouseoutEvent} from "../_api";
 
 
 /* Extend Field: AutoProfile array of objects Field */
@@ -73,34 +73,21 @@ Template.autoProfileField_array_object.helpers({
         // return "Error: subfields not Set in array of objects context";
         return '';
     },
+
     tooltipValue() {
-        const templateInstance = Template.instance();
-        const tooltip = templateInstance.data.tooltip;
-        if(tooltip && typeof tooltip.render === 'function') {
-            return tooltip.render(this, templateInstance);
-        }
+        return getTooltipValue(Template.instance(), this.skill);
     },
     tooltipDirection() {
-        const templateInstance = Template.instance();
-        const tooltip = templateInstance.data.tooltip;
-        return tooltip ? tooltip.direction : null;
+        return getTooltipDirection(Template.instance());
     },
     tooltipClasses() {
-        const templateInstance = Template.instance();
-        const tooltip = templateInstance.data.tooltip;
-        return tooltip ? tooltip.classes : null;
+        return getTooltipClasses(Template.instance());
     }
 });
 
 
 Template.autoProfileField_array_object.events({
     'mouseout'(event, template, doc) {
-        const $toElement = $(event.toElement);
-        if ($toElement.hasClass('tooltip') || $toElement.closest('.tooltip')[0]) {
-            event.stopPropagation();
-            $toElement.on('mouseleave', (event) => {
-                Tooltips.hide();
-            });
-        }
+        handleMouseoutEvent(event);
     }
 });
